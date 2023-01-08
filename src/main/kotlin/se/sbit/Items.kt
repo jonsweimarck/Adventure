@@ -1,25 +1,25 @@
 package se.sbit
 
 
-typealias ItemsPlacementMap = Map<ItemType, Placement<Room>>
+typealias ItemsPlacementMap = Map<ItemType, Placement>
 
 interface ItemType {
     val description: String
 }
 
-sealed class Placement<out Room>
-object Carried : Placement<Nothing>()
-data class InRoom<out Room>(val room: Room): Placement<Room>()
+sealed class Placement
+object Carried : Placement()
+data class InRoom(val room: Room): Placement()
 
 class Items(initialItemMap: ItemsPlacementMap) {
 
-    private val itemMap: MutableMap<ItemType, Placement<Room>> = initialItemMap.toMutableMap()
+    private val itemMap: MutableMap<ItemType, Placement> = initialItemMap.toMutableMap()
 
 
     fun carriedItems(): List<ItemType> = itemMap.keys.filter{itemMap[it] is Carried}
 
     fun itemsIn(room: Room): List<ItemType> = itemMap.entries
-        .filter{it.value is InRoom<Room>}
+        .filter{it.value is InRoom}
         .filter{(it.value as InRoom).room == room}
         .map{it.key}
 
@@ -30,7 +30,7 @@ class Items(initialItemMap: ItemsPlacementMap) {
             if(itemMap[item] is Carried) {
                 throw Exception("Tried to carry already carried item")
             }
-            if((itemMap[item] as InRoom<Room>).room != currentRoom){
+            if((itemMap[item] as InRoom).room != currentRoom){
                 throw Exception("Tried to pick up something from another room")
             }
         }
@@ -41,7 +41,7 @@ class Items(initialItemMap: ItemsPlacementMap) {
 
     fun drop(item: ItemType, room: Room): ItemType {
         // Sanity checks
-        if(itemMap.containsKey(item) && (itemMap[item]!! is InRoom<Room>)) {
+        if(itemMap.containsKey(item) && (itemMap[item]!! is InRoom)) {
             throw Exception("Tried to drop not carried item")
         }
 

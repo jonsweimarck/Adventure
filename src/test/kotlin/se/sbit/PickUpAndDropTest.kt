@@ -27,7 +27,7 @@ class PickUpAndDropTest {
         Bottle("en flaska")
     }
 
-    private var itemMap: Map<ItemType, Placement<Room>> = mapOf(
+    private var itemMap: Map<ItemType, Placement> = mapOf(
         WordItems.Sword to InRoom(roomA),
         WordItems.Key to InRoom(roomB),
         WordItems.Bottle to Carried

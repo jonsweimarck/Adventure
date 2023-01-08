@@ -24,7 +24,7 @@ class ActionsTest {
         Bottle("en flaska")
     }
 
-    private var itemMap: Map<ItemType, Placement<Room>> = mapOf(
+    private var itemMap: Map<ItemType, Placement> = mapOf(
         TestItems.Sword to InRoom(roomA),
         TestItems.Key to InRoom(roomB),
         TestItems.Bottle to Carried
