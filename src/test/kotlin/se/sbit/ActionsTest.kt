@@ -1,9 +1,6 @@
 package se.sbit
 
 import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.Test
-import strikt.api.expectCatching
-import strikt.api.expectThat
 import strikt.assertions.*
 
 /**
@@ -12,7 +9,7 @@ import strikt.assertions.*
  */
 @DisplayName("Given a world with items in rooms, the player:")
 class ActionsTest {
-/*
+
     private val roomA = Room("a")
     private val roomB = Room("b")
 
@@ -21,18 +18,66 @@ class ActionsTest {
         roomB to listOf(Pair(northGuard, roomA))
     )
 
-    enum class WordItems(override val description: String) : ItemType {
+    enum class TestItems(override val description: String) : ItemType {
         Sword("ett svärd"),
         Key("en nyckel"),
         Bottle("en flaska")
     }
 
-    private var itemMap: Map<ItemType, Placement<ItemType, Room>> = mapOf(
-        WordItems.Sword to InRoom(WordItems.Sword, roomA),
-        WordItems.Key to InRoom(WordItems.Key, roomB),
-        WordItems.Bottle to Carried(WordItems.Bottle)
+    private var itemMap: Map<ItemType, Placement<Room>> = mapOf(
+        TestItems.Sword to InRoom(roomA),
+        TestItems.Key to InRoom(roomB),
+        TestItems.Bottle to Carried
     )
 
+
+    // Flyttas in i engine
+//    interface ActionType
+
+    class Actions {
+        fun inRoom(currentRoom: Room): List<ActionItem> {
+            return listOf(NotUsedKey)
+        }
+    }
+
+    sealed class ActionItem
+
+    // STOPP Flyttas in i engine
+//
+//    enum class TestAction : ActionType {
+//        Key
+//    }
+
+
+
+    sealed class Key: ActionItem()
+    object NotUsedKey: Key()
+    object UsedKey: Key()
+
+    sealed class Event
+    data class KeyUsedSuccessfully(val newKey: Key): Event()
+    data class KeyAlreadyUsed(val newKey: Key): Event()
+    data class KeyCouldNotBeUsed(val newKey: Key): Event()
+    data class NoKeyNotBeUsed(val newKey: Key): Event()
+
+    fun useKey(currentKey: Key, currentRoom: Room, allItems: Items, allActions: Actions): Event {
+        if(! allItems.carriedItems().contains(TestItems.Key)){
+            return NoKeyNotBeUsed(currentKey);
+        }
+        if(allActions.inRoom(currentRoom).filterIsInstance<Key>().isEmpty()){
+            return KeyCouldNotBeUsed(currentKey);
+        }
+        if(currentKey == UsedKey) {
+            return KeyAlreadyUsed(currentKey)
+        }
+        return KeyUsedSuccessfully(UsedKey);
+    }
+
+
+
+
+
+/*
     @Test
     fun `can do action without using item`() {
         val currentRoom = roomA
