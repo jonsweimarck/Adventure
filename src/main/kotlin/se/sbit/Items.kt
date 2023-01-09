@@ -11,7 +11,7 @@ sealed class Placement
 object Carried : Placement()
 data class InRoom(val room: Room): Placement()
 
-class Items(initialItemMap: ItemsPlacementMap) {
+class Items(initialItemMap: ItemsPlacementMap, val itemUsageRoomMap: Map<ItemType, Room>) {
 
     private val itemMap: MutableMap<ItemType, Placement> = initialItemMap.toMutableMap()
 
@@ -23,6 +23,7 @@ class Items(initialItemMap: ItemsPlacementMap) {
         .filter{(it.value as InRoom).room == room}
         .map{it.key}
 
+    fun usableItemsInRoom(room: Room): List<ItemType> = itemUsageRoomMap.entries.filter { it.value==room }.map { it.key }
 
     fun pickUp(item: ItemType, currentRoom:Room): ItemType {
         // Sanity checks

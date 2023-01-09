@@ -3,6 +3,7 @@ package se.sbit
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
+import strikt.assertions.isA
 import strikt.assertions.isEqualTo
 
 /**
@@ -36,14 +37,25 @@ class RoomsAndConnectionTest {
     fun `can go to connected rooms`() {
         val game = Game(connections, startRoom = roomA)
 
-        expectThat(game.playerGo(Input(Command.goEast), roomA)).isEqualTo(roomB)
-        expectThat(game.playerGo(Input(Command.goSouth), roomA)).isEqualTo(roomC)
-        expectThat(game.playerGo(Input(Command.goWest), roomA)).isEqualTo(roomC)
+        val goEastEvent = game.playerGo(Input(GoCommand.GoEast), roomA)
+        expectThat(goEastEvent).isA<NewRoomEvent>()
+        expectThat(goEastEvent.newRoom).isEqualTo(roomB)
+
+        val goSouthEvent = game.playerGo(Input(GoCommand.GoSouth), roomA)
+        expectThat(goSouthEvent).isA<NewRoomEvent>()
+        expectThat(goSouthEvent.newRoom).isEqualTo(roomC)
+
+        val goWestEvent = game.playerGo(Input(GoCommand.GoWest), roomA)
+        expectThat(goWestEvent).isA<NewRoomEvent>()
+        expectThat(goWestEvent.newRoom).isEqualTo(roomC)
     }
 
     @Test
     fun `can not go to not connected rooms`() {
         val game = Game(connections, startRoom = roomA)
-        expectThat(game.playerGo(Input(Command.goNorth), roomA)).isEqualTo(roomA)
+
+        val goNorthEvent = game.playerGo(Input(GoCommand.GoNorth), roomA)
+        expectThat(goNorthEvent).isA<SameRoomEvent>()
+        expectThat(goNorthEvent.newRoom).isEqualTo(roomA)
     }
 }

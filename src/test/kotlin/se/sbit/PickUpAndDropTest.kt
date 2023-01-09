@@ -21,69 +21,69 @@ class PickUpAndDropTest {
         roomB to listOf(Pair(northGuard, roomA))
     )
 
-    enum class WordItems(override val description: String) : ItemType {
-        Sword("ett svärd"),
-        Key("en nyckel"),
-        Bottle("en flaska")
-    }
+
+    sealed class TestItems(override val description: String): ItemType
+    object Sword: TestItems("ett svärd")
+    object Key: TestItems("en nyckel")
+    object Bottle: TestItems("en flaska")
 
     private var itemMap: Map<ItemType, Placement> = mapOf(
-        WordItems.Sword to InRoom(roomA),
-        WordItems.Key to InRoom(roomB),
-        WordItems.Bottle to Carried
+        Sword to InRoom(roomA),
+        Key to InRoom(roomB),
+        Bottle to Carried
     )
 
     @Test
     fun `can carry item from start`() {
         val currentRoom = roomA
-        val game = Game(connectedRooms, itemMap, currentRoom)
+        val game = Game(connectedRooms, itemMap, startRoom = currentRoom)
 
-        expectThat(game.allItems.carriedItems()).containsExactly(WordItems.Bottle)
+        expectThat(game.allItems.carriedItems()).containsExactly(Bottle)
     }
 
     @Test
     fun `can pick up item in current room`() {
         val currentRoom = roomA
-        val game = Game(connectedRooms, itemMap, currentRoom)
+        val game = Game(connectedRooms, itemMap, startRoom = currentRoom)
 
-        expectThat(game.allItems.carriedItems()).containsExactly(WordItems.Bottle)
-        game.allItems.pickUp(WordItems.Sword, currentRoom)
-        expectThat(game.allItems.carriedItems()).containsExactlyInAnyOrder(WordItems.Bottle, WordItems.Sword)
+        expectThat(game.allItems.carriedItems()).containsExactly(Bottle)
+        game.allItems.pickUp(Sword, currentRoom)
+        expectThat(game.allItems.carriedItems()).containsExactlyInAnyOrder(Bottle, Sword)
     }
 
 
     @Test
     fun `cannot pick up item from another room`() {
         val currentRoom = roomA
-        val game = Game(connectedRooms, itemMap, currentRoom)
+        val game = Game(connectedRooms, itemMap, startRoom = currentRoom)
 
-        expectCatching {game.allItems.pickUp(WordItems.Key, roomA)}.isFailure()
+        expectCatching {game.allItems.pickUp(Key, roomA)}.isFailure()
     }
 
     @Test
     fun `cannot pick up item already carried`() {
         val currentRoom = roomA
-        val game = Game(connectedRooms, itemMap, currentRoom)
+        val game = Game(connectedRooms, itemMap, startRoom = currentRoom)
 
-        expectCatching {game.allItems.pickUp(WordItems.Bottle, roomA)}.isFailure()
+        expectCatching {game.allItems.pickUp(Bottle, roomA)}.isFailure()
     }
 
     @Test
     fun `can drop carried item`() {
         val currentRoom = roomA
-        val game = Game(connectedRooms, itemMap, currentRoom)
+        val game = Game(connectedRooms, itemMap, startRoom = currentRoom)
 
-        expectThat(game.allItems.carriedItems()).containsExactly(WordItems.Bottle)
-        game.allItems.drop(WordItems.Bottle, roomA)
+        expectThat(game.allItems.carriedItems()).containsExactly(Bottle)
+        game.allItems.drop(Bottle, roomA)
         expectThat(game.allItems.carriedItems()).isEmpty()
     }
 
     @Test
     fun `cannot drop item not carried`() {
         val currentRoom = roomA
-        val game = Game(connectedRooms, itemMap, currentRoom)
+        val game = Game(connectedRooms, itemMap, startRoom = currentRoom)
 
-        expectCatching {game.allItems.drop(WordItems.Key, roomA)}.isFailure()
+        expectCatching {game.allItems.drop(Key, roomA)}.isFailure()
     }
 
 }

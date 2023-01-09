@@ -1,15 +1,18 @@
 package se.sbit
 
 import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Test
+import strikt.api.expectThat
 import strikt.assertions.*
 
 /**
  * Note: To see the test names when running in IntelliJ IDE and not only in Gradle HTML report,
  * go to IntelliJ settings -> Build, Execution, Deployment -> Build Tools -> Gradle, and under "Run tests using" select "IntelliJ IDEA"
  */
-@DisplayName("Given a world with items in rooms, the player:")
+@DisplayName("The world can be configured so the player:")
 class ActionsTest {
 
+    // Setting up two rooms, connected North-South
     private val roomA = Room("a")
     private val roomB = Room("b")
 
@@ -18,90 +21,106 @@ class ActionsTest {
         roomB to listOf(Pair(northGuard, roomA))
     )
 
-    enum class TestItems(override val description: String) : ItemType {
-        Sword("ett svärd"),
-        Key("en nyckel"),
-        Bottle("en flaska")
-    }
 
-    private var itemMap: Map<ItemType, Placement> = mapOf(
-        TestItems.Sword to InRoom(roomA),
-        TestItems.Key to InRoom(roomB),
-        TestItems.Bottle to Carried
+    // All Items, as well as where they are placed, and in what rooms they can be used
+    sealed class MiscItems(override val description: String): ItemType
+    object Sword: MiscItems("ett svärd")
+    object Bottle: MiscItems("en flaska")
+
+    sealed class Key(override val description: String): ItemType
+    object UnusedKey: Key("Oanvänd nyckel")
+    object UsedKey: Key("Använd nyckel")
+
+    private var placementMap: Map<ItemType, Placement> = mapOf(
+        Sword to InRoom(roomA),
+        UnusedKey to Carried,
+        Bottle to Carried
     )
 
+    val itemUsageRoomMap: Map<ItemType, Room> = mapOf(
+        UnusedKey to roomA,
+        Bottle to roomB)
 
-    // Flyttas in i engine
-//    interface ActionType
-
-    class Actions {
-        fun inRoom(currentRoom: Room): List<ActionItem> {
-            return listOf(NotUsedKey)
-        }
+    // Possible user input
+    enum class ActionCommand: CommandType {
+        UseKey,
+        Dance
     }
 
-    sealed class ActionItem
+    // Mapping user inputs to what event-returning function to run
+    data class KeyUsedSuccessfully(val newKey: Key) : Event()
+    data class KeyAlreadyUsed(val newKey: Key) : Event()
+    object NoUsageOfKey : Event()
+    object NoKeyToBeUsed : Event()
 
-    // STOPP Flyttas in i engine
-//
-//    enum class TestAction : ActionType {
-//        Key
-//    }
+    object DancingEvent: Event()
+
+    val actionMap: Map<CommandType, (Input, Room, Items) -> Event> = mapOf(
+        ActionCommand.UseKey to ::useKey,
+        ActionCommand.Dance to { _, _, _  -> DancingEvent })
 
 
-
-    sealed class Key: ActionItem()
-    object NotUsedKey: Key()
-    object UsedKey: Key()
-
-    sealed class Event
-    data class KeyUsedSuccessfully(val newKey: Key): Event()
-    data class KeyAlreadyUsed(val newKey: Key): Event()
-    data class KeyCouldNotBeUsed(val newKey: Key): Event()
-    data class NoKeyNotBeUsed(val newKey: Key): Event()
-
-    fun useKey(currentKey: Key, currentRoom: Room, allItems: Items, allActions: Actions): Event {
-        if(! allItems.carriedItems().contains(TestItems.Key)){
-            return NoKeyNotBeUsed(currentKey);
+    fun useKey(input:Input, currentRoom: Room, items: Items): Event {
+        if(items.carriedItems().filterIsInstance<Key>().isEmpty()){
+            return NoKeyToBeUsed;
         }
-        if(allActions.inRoom(currentRoom).filterIsInstance<Key>().isEmpty()){
-            return KeyCouldNotBeUsed(currentKey);
+
+        if(items.usableItemsInRoom(currentRoom).filterIsInstance<Key>().isEmpty()){
+            return NoUsageOfKey;
         }
+        val currentKey = items.usableItemsInRoom(currentRoom).filterIsInstance<Key>().first()
+
         if(currentKey == UsedKey) {
             return KeyAlreadyUsed(currentKey)
         }
+
         return KeyUsedSuccessfully(UsedKey);
     }
 
 
 
 
-
-/*
     @Test
-    fun `can do action without using item`() {
+    fun `can do an action in any room without carrying any item`() {
         val currentRoom = roomA
-        val game = Game(connectedRooms, itemMap, currentRoom)
+        val game = Game(connectedRooms, placementMap, actionMap, itemUsageRoomMap = emptyMap(), currentRoom)
 
-        game.playeractions.do(Action.PressButton)
+        val event = game.playerDo(Input(ActionCommand.Dance), currentRoom)
+        expectThat(event).isA<DancingEvent>()
+    }
 
-        expectThat(game.allItems.carriedItems()).containsExactly(WordItems.Bottle)
+
+    @Test
+    fun `must carry an item to do an action`() {
+        val currentRoom = roomA
+        val game = Game(connectedRooms, placementMap, actionMap, itemUsageRoomMap, currentRoom)
+
+        expectThat(game.allItems.carriedItems()).contains(UnusedKey)
+        val event = game.playerDo(Input(ActionCommand.UseKey), currentRoom)
+        expectThat(event).isA<KeyUsedSuccessfully>()
+        expectThat((event as  KeyUsedSuccessfully).newKey).isEqualTo(UsedKey)
     }
 
     @Test
-    fun `can use item in an action`() {
+    fun `cannot do action if not carrying correct item`() {
         val currentRoom = roomA
-        val game = Game(connectedRooms, itemMap, currentRoom)
+        val game = Game(connectedRooms, placementMap, actionMap, itemUsageRoomMap, currentRoom)
 
-        expectThat(game.allItems.carriedItems()).containsExactly(WordItems.Bottle)
-        game.allItems.pickUp(WordItems.Sword, currentRoom)
-        expectThat(game.allItems.carriedItems()).containsExactlyInAnyOrder(WordItems.Bottle, WordItems.Sword)
+        game.allItems.drop(UnusedKey, currentRoom)
+        expectThat(game.allItems.carriedItems()).doesNotContain(UnusedKey)
+        val event = game.playerDo(Input(ActionCommand.UseKey), currentRoom)
+        expectThat(event).isA<NoKeyToBeUsed>()
     }
 
     @Test
-    fun `can get lits of all possible actions in current room`() {}
+    fun `cannot do action specific for another room`() {
+        val currentRoom = roomB     // <- starts in roomB where the key can't be used
+        val game = Game(connectedRooms, placementMap, actionMap, itemUsageRoomMap, currentRoom)
 
-    @Test
-    fun `cannot do action not listed in the current room`() {}
-*/
+        expectThat(game.allItems.carriedItems()).contains(UnusedKey)
+        val event = game.playerDo(Input(ActionCommand.UseKey), currentRoom)
+        expectThat(event).isA<NoUsageOfKey>()
+    }
+
+
 }
