@@ -22,6 +22,7 @@ class ActionsTest {
     )
 
 
+
     // All Items, as well as where they are placed, and in what rooms they can be used
     sealed class MiscItems(override val description: String): ItemType
     object Sword: MiscItems("ett svärd")
@@ -56,6 +57,10 @@ class ActionsTest {
     object DancingEvent: Event()
 
     val actionMap: Map<CommandType, (Input, Room, Items) -> Event> = mapOf(
+        GoCommand.GoEast to goActionFromRoomConnectionsMap(connectedRooms),
+        GoCommand.GoWest to goActionFromRoomConnectionsMap(connectedRooms),
+        GoCommand.GoNorth to goActionFromRoomConnectionsMap(connectedRooms),
+        GoCommand.GoSouth to goActionFromRoomConnectionsMap(connectedRooms),
         ActionCommand.UseKey to ::useKey,
         ActionCommand.Dance to { _, _, _  -> DancingEvent })
 
