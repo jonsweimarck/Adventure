@@ -1,4 +1,4 @@
-package se.sbit
+package se.sbit.adventure.engine
 
 
 typealias Guard = (Input, Room) -> Boolean
@@ -9,11 +9,11 @@ val southGuard: Guard = { input, _ -> (input.command == GoCommand.GoSouth)}
 val westGuard: Guard = { input, _ -> (input.command == GoCommand.GoWest)}
 
 
-infix fun Guard.and(g2: Guard): Guard  {
+infix fun Guard.and(g2: Guard): Guard {
     return {input, room -> this.invoke(input, room) && g2(input, room)}
 }
 
-infix fun Guard.or(g2: Guard): Guard  {
+infix fun Guard.or(g2: Guard): Guard {
     return {input, room -> this.invoke(input, room) || g2(input, room)}
 }
 
@@ -21,13 +21,13 @@ fun goActionFromRoomConnectionsMap(connectionsMap: RoomConnectionsMap): (Input, 
 {
     return fun(input, currentRoom, items): Event {
         val roomConnections = connectionsMap.getOrElse(currentRoom) {
-            return SameRoomEvent(currentRoom) // Should neeeeeever happen
+            return SameRoomEvent("That didn't work!", currentRoom) // Should neeeeeever happen
         }
 
         val index = roomConnections.indexOfFirst { it.first.invoke(input, currentRoom) }
         if (index == -1) {
-            return SameRoomEvent(currentRoom)
+            return SameRoomEvent("That didn't work!", currentRoom)
         }
-        return NewRoomEvent(roomConnections[index].second)
+        return NewRoomEvent("", roomConnections[index].second)
     }
 }

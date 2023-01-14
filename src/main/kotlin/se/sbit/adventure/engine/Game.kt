@@ -1,4 +1,4 @@
-package se.sbit
+package se.sbit.adventure.engine
 
 
 interface CommandType
@@ -10,11 +10,12 @@ enum class GoCommand: CommandType {
 data class Input(val command: CommandType) // includes player, inventory, entered GoCommand, ...
 data class Room(val name: String) // Room with it's description, possible commands, ...
 
-open class Event
+open class Event(val gameText: String)
+object EndEvent:Event("Game over")
 
-open class RoomEvent(val newRoom: Room) : Event()
-class NewRoomEvent(room: Room): RoomEvent(room)
-class SameRoomEvent(room: Room): RoomEvent(room)
+open class RoomEvent(gameText: String, val newRoom: Room) : Event(gameText + newRoom.name)
+class NewRoomEvent(gameText: String, room: Room): RoomEvent(gameText, room)
+class SameRoomEvent(gameText: String, room: Room): RoomEvent(gameText, room)
 
 typealias RoomConnectionsMap =  Map<Room, List<Pair<Guard, Room>>>
 
@@ -23,7 +24,8 @@ class Game(val connections: RoomConnectionsMap,
            itemsPlacementMap: ItemsPlacementMap = emptyMap(),
            val actionMap: Map<CommandType, (Input, Room, Items) -> Event> = emptyMap(),
            itemUsageRoomMap: Map<ItemType, Room> = emptyMap(),
-           val startRoom: Room){
+           val startRoom: Room
+){
 
     val allItems: Items = Items(itemsPlacementMap, itemUsageRoomMap)
 
@@ -33,11 +35,5 @@ class Game(val connections: RoomConnectionsMap,
             throw Exception("Mama Mia! Undefined command in input$input.command")
         }.invoke(input, currentRoom, allItems)
     }
-}
-
-
-
-fun main() {
-    println("Nothing here, run tests")
 }
 

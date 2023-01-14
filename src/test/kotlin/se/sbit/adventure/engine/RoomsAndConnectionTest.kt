@@ -1,7 +1,8 @@
-package se.sbit
+package se.sbit.adventure.engine
 
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import se.sbit.adventure.engine.*
 import strikt.api.expectThat
 import strikt.assertions.isA
 import strikt.assertions.isEqualTo
@@ -32,7 +33,8 @@ class RoomsAndConnectionTest {
         GoCommand.GoEast to goActionFromRoomConnectionsMap(connectionsMap),
         GoCommand.GoWest to goActionFromRoomConnectionsMap(connectionsMap),
         GoCommand.GoNorth to goActionFromRoomConnectionsMap(connectionsMap),
-        GoCommand.GoSouth to goActionFromRoomConnectionsMap(connectionsMap))
+        GoCommand.GoSouth to goActionFromRoomConnectionsMap(connectionsMap)
+    )
 
     @Test
     fun `starts in a room`() {

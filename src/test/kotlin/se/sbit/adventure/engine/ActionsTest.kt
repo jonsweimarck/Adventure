@@ -1,7 +1,8 @@
-package se.sbit
+package se.sbit.adventure.engine
 
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import se.sbit.adventure.engine.*
 import strikt.api.expectThat
 import strikt.assertions.*
 
@@ -20,8 +21,6 @@ class ActionsTest {
         roomA to listOf(Pair(southGuard, roomB)),
         roomB to listOf(Pair(northGuard, roomA))
     )
-
-
 
     // All Items, as well as where they are placed, and in what rooms they can be used
     sealed class MiscItems(override val description: String): ItemType
@@ -49,12 +48,12 @@ class ActionsTest {
     }
 
     // Mapping user inputs to what event-returning function to run
-    data class KeyUsedSuccessfully(val newKey: Key) : Event()
-    data class KeyAlreadyUsed(val newKey: Key) : Event()
-    object NoUsageOfKey : Event()
-    object NoKeyToBeUsed : Event()
+    data class KeyUsedSuccessfully(val newKey: Key) : Event("The was used successfully!")
+    data class KeyAlreadyUsed(val newKey: Key) : Event("You have already used the key")
+    object NoUsageOfKey : Event("You cannot use the key here!")
+    object NoKeyToBeUsed : Event("You havn't got a key, have you?")
 
-    object DancingEvent: Event()
+    object DancingEvent: Event("Dance, dance, dance!")
 
     val actionMap: Map<CommandType, (Input, Room, Items) -> Event> = mapOf(
         GoCommand.GoEast to goActionFromRoomConnectionsMap(connectedRooms),
@@ -65,7 +64,7 @@ class ActionsTest {
         ActionCommand.Dance to { _, _, _  -> DancingEvent })
 
 
-    fun useKey(input:Input, currentRoom: Room, items: Items): Event {
+    fun useKey(input: Input, currentRoom: Room, items: Items): Event {
         if(items.carriedItems().filterIsInstance<Key>().isEmpty()){
             return NoKeyToBeUsed;
         }
@@ -103,7 +102,7 @@ class ActionsTest {
         expectThat(game.allItems.carriedItems()).contains(UnusedKey)
         val event = game.playerDo(Input(ActionCommand.UseKey), currentRoom)
         expectThat(event).isA<KeyUsedSuccessfully>()
-        expectThat((event as  KeyUsedSuccessfully).newKey).isEqualTo(UsedKey)
+        expectThat((event as KeyUsedSuccessfully).newKey).isEqualTo(UsedKey)
     }
 
     @Test

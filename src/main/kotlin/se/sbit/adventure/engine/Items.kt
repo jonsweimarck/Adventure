@@ -1,4 +1,4 @@
-package se.sbit
+package se.sbit.adventure.engine
 
 
 typealias ItemsPlacementMap = Map<ItemType, Placement>
@@ -16,16 +16,16 @@ class Items(initialItemMap: ItemsPlacementMap, val itemUsageRoomMap: Map<ItemTyp
     private val itemMap: MutableMap<ItemType, Placement> = initialItemMap.toMutableMap()
 
 
-    fun carriedItems(): List<ItemType> = itemMap.keys.filter{itemMap[it] is Carried}
+    fun carriedItems(): List<ItemType> = itemMap.keys.filter{itemMap[it] is Carried }
 
     fun itemsIn(room: Room): List<ItemType> = itemMap.entries
-        .filter{it.value is InRoom}
+        .filter{it.value is InRoom }
         .filter{(it.value as InRoom).room == room}
         .map{it.key}
 
     fun usableItemsInRoom(room: Room): List<ItemType> = itemUsageRoomMap.entries.filter { it.value==room }.map { it.key }
 
-    fun pickUp(item: ItemType, currentRoom:Room): ItemType {
+    fun pickUp(item: ItemType, currentRoom: Room): ItemType {
         // Sanity checks
         if(itemMap.containsKey(item)) {
             if(itemMap[item] is Carried) {

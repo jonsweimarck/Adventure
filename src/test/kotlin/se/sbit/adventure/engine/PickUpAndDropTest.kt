@@ -1,7 +1,8 @@
-package se.sbit
+package se.sbit.adventure.engine
 
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import se.sbit.adventure.engine.*
 import strikt.api.expectCatching
 import strikt.api.expectThat
 import strikt.assertions.*
