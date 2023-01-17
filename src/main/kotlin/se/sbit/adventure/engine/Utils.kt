@@ -17,16 +17,18 @@ infix fun Guard.or(g2: Guard): Guard {
     return {input, room -> this.invoke(input, room) || g2(input, room)}
 }
 
-fun goActionFromRoomConnectionsMap(connectionsMap: RoomConnectionsMap): (Input, Room, Items) -> Event
+fun goActionFromRoomConnectionsMap(connectionsMap: RoomConnectionsMap, sameRoomEventText: String = "That didn't work!"): (Input, Room, Items) -> Event
 {
     return fun(input, currentRoom, items): Event {
         val roomConnections = connectionsMap.getOrElse(currentRoom) {
-            return SameRoomEvent("That didn't work!", currentRoom) // Should neeeeeever happen
+            // Should neeeeeever happen.The room has no connections!
+            return SameRoomEvent(sameRoomEventText +"1\n", currentRoom)
         }
 
         val index = roomConnections.indexOfFirst { it.first.invoke(input, currentRoom) }
         if (index == -1) {
-            return SameRoomEvent("That didn't work!", currentRoom)
+            // Trying to walk in an unconnected direction
+            return SameRoomEvent(sameRoomEventText +"2\n", currentRoom)
         }
         return NewRoomEvent("", roomConnections[index].second)
     }

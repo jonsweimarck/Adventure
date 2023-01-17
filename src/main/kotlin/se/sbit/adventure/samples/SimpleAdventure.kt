@@ -3,10 +3,18 @@ package se.sbit.adventure.samples
 import se.sbit.adventure.engine.*
 
 // Setting up two rooms, connected North-South
-private val roomA = Room("a")
-private val roomB = Room("b")
+private val roomA = Room(
+    """
+        |Du står på en gräsmatta i en villaträdgård. 
+        |Trädgården har höga häckan åt tre väderstreck, och åt söder ligger villan.
+    """.trimMargin())
+private val roomB = Room(
+    """
+        |Du står på ett trädäck framför en villa. 
+        |En dörr leder in i huset.
+    """.trimMargin())
 
-val currentRoom = roomA
+val startRoom = roomA
 
 private val connectedRooms = mapOf(
     roomA to listOf(Pair(southGuard, roomB)),
@@ -34,6 +42,8 @@ val itemUsageRoomMap: Map<ItemType, Room> = mapOf(
 
 // Possible user input
 enum class ActionCommand: CommandType {
+    TakeKey,
+    DropKey,
     UseKey,
     Dance,
     GibberishInput,
@@ -48,10 +58,10 @@ object NoKeyToBeUsed : Event("You havn't got a key, have you?")
 
 
 val actionMap: Map<CommandType, (Input, Room, Items) -> Event> = mapOf(
-    GoCommand.GoEast to goActionFromRoomConnectionsMap(connectedRooms),
-    GoCommand.GoWest to goActionFromRoomConnectionsMap(connectedRooms),
-    GoCommand.GoNorth to goActionFromRoomConnectionsMap(connectedRooms),
-    GoCommand.GoSouth to goActionFromRoomConnectionsMap(connectedRooms),
+    GoCommand.GoEast to goActionFromRoomConnectionsMap(connectedRooms, "Så kan du inte gå!"),
+    GoCommand.GoWest to goActionFromRoomConnectionsMap(connectedRooms,"Så kan du inte gå!"),
+    GoCommand.GoNorth to goActionFromRoomConnectionsMap(connectedRooms,"Så kan du inte gå!"),
+    GoCommand.GoSouth to goActionFromRoomConnectionsMap(connectedRooms,"Så kan du inte gå!"),
     ActionCommand.UseKey to ::useKey,
     ActionCommand.Dance to { _, _, _  -> Event("Dance, dance, dance!")},
     ActionCommand.GibberishInput to { _, _, _  -> Event("Sorry, I don't understand that!") },
@@ -80,7 +90,9 @@ val input2Command: Map<String, CommandType> = mapOf (
     "south" to GoCommand.GoSouth,
     "go north" to GoCommand.GoNorth,
     "north" to GoCommand.GoNorth,
-    "exit" to ActionCommand.EndGame
+    "exit" to ActionCommand.EndGame,
+    "dance" to ActionCommand.Dance,
+    "ta nyckel" to ActionCommand.TakeKey
 
 
 )
@@ -90,12 +102,24 @@ fun main() {
     println("**************  Simple Adventure ****************")
 
 
-    val game = Game(connectedRooms, placementMap, actionMap, itemUsageRoomMap, currentRoom)
-    var event: Event = NewRoomEvent("Welcome!\n", currentRoom)
-
+    val game = Game(connectedRooms, placementMap, actionMap, itemUsageRoomMap, startRoom)
+    var event: Event = NewRoomEvent("Welcome!\n", startRoom)
+    var currentRoom = startRoom
     while (event !is EndEvent){
-        StandardInOut.showText(event.gameText)
+        StandardInOut.showText(formatGameTextAndItems(event.gameText, game.allItems.itemsIn(currentRoom)))
+
         val input:String = StandardInOut.waitForInput()
         event = game.playerDo(Input(Interpreter.interpret(input, input2Command, ActionCommand.GibberishInput)), currentRoom)
+        if(event is RoomEvent) {
+            currentRoom = event.newRoom
+        }
     }
 }
+
+fun formatGameTextAndItems(gameText: String, items: List<ItemType>): String =
+    if (items.isEmpty()) {
+        gameText +"\n"
+    } else{
+        gameText +"\n" + "Du ser " + items.joinToString { it.description }
+    }
+
