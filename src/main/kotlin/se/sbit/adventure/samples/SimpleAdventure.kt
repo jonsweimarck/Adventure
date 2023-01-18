@@ -6,7 +6,7 @@ import se.sbit.adventure.engine.*
 private val roomA = Room(
     """
         |Du står på en gräsmatta i en villaträdgård. 
-        |Trädgården har höga häckan åt tre väderstreck, och åt söder ligger villan.
+        |Trädgården har höga häckar åt tre väderstreck, och åt söder ligger villan.
     """.trimMargin())
 private val roomB = Room(
     """
@@ -45,16 +45,12 @@ enum class ActionCommand: CommandType {
     TakeKey,
     DropKey,
     UseKey,
+    LookAround,
     Dance,
     GibberishInput,
     EndGame
 }
 
-// Mapping user inputs to what event-returning function to run
-data class KeyUsedSuccessfully(val newKey: Key) : Event("The was used successfully!")
-data class KeyAlreadyUsed(val newKey: Key) : Event("You have already used the key")
-object NoUsageOfKey : Event("You cannot use the key here!")
-object NoKeyToBeUsed : Event("You havn't got a key, have you?")
 
 val input2Command: Map<String, CommandType> = mapOf (
     "gå söder" to GoCommand.GoSouth,
@@ -65,21 +61,29 @@ val input2Command: Map<String, CommandType> = mapOf (
     "dansa" to ActionCommand.Dance,
     "ta nyckel" to ActionCommand.TakeKey,
     "ta upp nyckel" to ActionCommand.TakeKey,
-    "släpp nyckel" to ActionCommand.DropKey
+    "släpp nyckel" to ActionCommand.DropKey,
+    "titta" to ActionCommand.LookAround
 )
+
+// Mapping user inputs to what event-returning function to run
+data class KeyUsedSuccessfully(val newKey: Key) : Event("The was used successfully!")
+data class KeyAlreadyUsed(val newKey: Key) : Event("You have already used the key")
+object NoUsageOfKey : Event("You cannot use the key here!")
+object NoKeyToBeUsed : Event("You havn't got a key, have you?")
 
 
 val actionMap: Map<CommandType, (Input, Room, Items) -> Event> = mapOf(
-    GoCommand.GoEast to goActionFromRoomConnectionsMap(connectedRooms, "Så kan du inte gå!"),
-    GoCommand.GoWest to goActionFromRoomConnectionsMap(connectedRooms,"Så kan du inte gå!"),
-    GoCommand.GoNorth to goActionFromRoomConnectionsMap(connectedRooms,"Så kan du inte gå!"),
-    GoCommand.GoSouth to goActionFromRoomConnectionsMap(connectedRooms,"Så kan du inte gå!"),
+    GoCommand.GoEast to goActionFromRoomConnectionsMap(connectedRooms, "Du kan inte gå dit."),
+    GoCommand.GoWest to goActionFromRoomConnectionsMap(connectedRooms,"Du kan inte gå dit.!"),
+    GoCommand.GoNorth to goActionFromRoomConnectionsMap(connectedRooms,"Du kan inte gå dit."),
+    GoCommand.GoSouth to goActionFromRoomConnectionsMap(connectedRooms,"Du kan inte gå dit."),
     ActionCommand.UseKey to ::useKey,
     ActionCommand.Dance to { _, _, _  -> Event("Dance, dance, dance!")},
     ActionCommand.GibberishInput to { _, _, _  -> Event("Hmmm, det där förstod jag inte!") },
     ActionCommand.EndGame to { _, _, _  -> EndEvent },
     ActionCommand.TakeKey to goActionForPickUpItem(UnusedKey, "Går inte att ta upp en sådan här!", "Tog upp"),
-    ActionCommand.DropKey to goActionForDropItem(UnusedKey, "Du har ingen sådan att släppa!", "Släppte")
+    ActionCommand.DropKey to goActionForDropItem(UnusedKey, "Du har ingen sådan att släppa!", "Släppte"),
+    ActionCommand.LookAround to { _, currentRoom, _  -> SameRoomEvent("Du tittar dig omkring.", currentRoom)}
 )
 
 

@@ -13,7 +13,7 @@ data class Room(val name: String) // Room with it's description, possible comman
 open class Event(val gameText: String)
 object EndEvent:Event("Game over")
 
-open class RoomEvent(gameText: String, val newRoom: Room) : Event(gameText + newRoom.name)
+open class RoomEvent(gameText: String, val newRoom: Room) : Event("${gameText}\n${newRoom.name}")
 class NewRoomEvent(gameText: String, room: Room): RoomEvent(gameText, room)
 class SameRoomEvent(gameText: String, room: Room): RoomEvent(gameText, room)
 
@@ -32,8 +32,9 @@ class Game(val connections: RoomConnectionsMap,
 
     fun playerDo(input: Input, currentRoom: Room): Event {
         return actionMap.getOrElse(input.command) {
-            throw Exception("Mama Mia! Undefined command in input$input.command")
+            throw Exception("Mama Mia! Undefined command in input${input.command}")
         }.invoke(input, currentRoom, allItems)
     }
+
 }
 

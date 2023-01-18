@@ -22,13 +22,13 @@ fun goActionFromRoomConnectionsMap(connectionsMap: RoomConnectionsMap, sameRoomE
     return fun(input, currentRoom, items): Event {
         val roomConnections = connectionsMap.getOrElse(currentRoom) {
             // Should neeeeeever happen.The room has no connections!
-            return SameRoomEvent(sameRoomEventText +"1\n", currentRoom)
+            return SameRoomEvent(sameRoomEventText , currentRoom)
         }
 
         val index = roomConnections.indexOfFirst { it.first.invoke(input, currentRoom) }
         if (index == -1) {
             // Trying to walk in an unconnected direction
-            return SameRoomEvent(sameRoomEventText +"2\n", currentRoom)
+            return SameRoomEvent(sameRoomEventText , currentRoom)
         }
         return NewRoomEvent("", roomConnections[index].second)
     }
