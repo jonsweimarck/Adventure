@@ -56,6 +56,18 @@ data class KeyAlreadyUsed(val newKey: Key) : Event("You have already used the ke
 object NoUsageOfKey : Event("You cannot use the key here!")
 object NoKeyToBeUsed : Event("You havn't got a key, have you?")
 
+val input2Command: Map<String, CommandType> = mapOf (
+    "gå söder" to GoCommand.GoSouth,
+    "söder" to GoCommand.GoSouth,
+    "gå norr" to GoCommand.GoNorth,
+    "norr" to GoCommand.GoNorth,
+    "exit" to ActionCommand.EndGame,
+    "dansa" to ActionCommand.Dance,
+    "ta nyckel" to ActionCommand.TakeKey,
+    "ta upp nyckel" to ActionCommand.TakeKey,
+    "släpp nyckel" to ActionCommand.DropKey
+)
+
 
 val actionMap: Map<CommandType, (Input, Room, Items) -> Event> = mapOf(
     GoCommand.GoEast to goActionFromRoomConnectionsMap(connectedRooms, "Så kan du inte gå!"),
@@ -66,7 +78,9 @@ val actionMap: Map<CommandType, (Input, Room, Items) -> Event> = mapOf(
     ActionCommand.Dance to { _, _, _  -> Event("Dance, dance, dance!")},
     ActionCommand.GibberishInput to { _, _, _  -> Event("Hmmm, det där förstod jag inte!") },
     ActionCommand.EndGame to { _, _, _  -> EndEvent },
-    ActionCommand.TakeKey to goActionForPickUpItem(UnusedKey, "Går inte att ta upp en sådan här!", "Tog upp"))
+    ActionCommand.TakeKey to goActionForPickUpItem(UnusedKey, "Går inte att ta upp en sådan här!", "Tog upp"),
+    ActionCommand.DropKey to goActionForDropItem(UnusedKey, "Du har ingen sådan att släppa!", "Släppte")
+)
 
 
 fun useKey(input: Input, currentRoom: Room, items: Items): Event {
@@ -85,16 +99,6 @@ fun useKey(input: Input, currentRoom: Room, items: Items): Event {
 
     return KeyUsedSuccessfully(UsedKey);
 }
-
-val input2Command: Map<String, CommandType> = mapOf (
-    "go south" to GoCommand.GoSouth,
-    "south" to GoCommand.GoSouth,
-    "go north" to GoCommand.GoNorth,
-    "north" to GoCommand.GoNorth,
-    "exit" to ActionCommand.EndGame,
-    "dance" to ActionCommand.Dance,
-    "ta nyckel" to ActionCommand.TakeKey
-)
 
 
 fun main() {
