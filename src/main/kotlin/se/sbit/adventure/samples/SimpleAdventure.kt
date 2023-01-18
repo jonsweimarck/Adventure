@@ -27,13 +27,13 @@ object Sword: MiscItems("ett svärd")
 object Bottle: MiscItems("en flaska")
 
 sealed class Key(override val description: String): ItemType
-object UnusedKey: Key("Oanvänd nyckel")
-object UsedKey: Key("Använd nyckel")
+object UnusedKey: Key("en nyckel")
+object UsedKey: Key("en nyckel")
 
 private var placementMap: Map<ItemType, Placement> = mapOf(
-    Sword to InRoom(roomA),
-    UnusedKey to Carried,
-    Bottle to Carried
+    UnusedKey to InRoom(roomA),
+    Sword to Carried,
+    Bottle to InRoom(roomA)
 )
 
 val itemUsageRoomMap: Map<ItemType, Room> = mapOf(
@@ -64,8 +64,9 @@ val actionMap: Map<CommandType, (Input, Room, Items) -> Event> = mapOf(
     GoCommand.GoSouth to goActionFromRoomConnectionsMap(connectedRooms,"Så kan du inte gå!"),
     ActionCommand.UseKey to ::useKey,
     ActionCommand.Dance to { _, _, _  -> Event("Dance, dance, dance!")},
-    ActionCommand.GibberishInput to { _, _, _  -> Event("Sorry, I don't understand that!") },
-    ActionCommand.EndGame to { _, _, _  -> EndEvent },)
+    ActionCommand.GibberishInput to { _, _, _  -> Event("Hmmm, det där förstod jag inte!") },
+    ActionCommand.EndGame to { _, _, _  -> EndEvent },
+    ActionCommand.TakeKey to goActionForPickUpItem(UnusedKey, "Går inte att ta upp en sådan här!", "Tog upp"))
 
 
 fun useKey(input: Input, currentRoom: Room, items: Items): Event {
@@ -93,8 +94,6 @@ val input2Command: Map<String, CommandType> = mapOf (
     "exit" to ActionCommand.EndGame,
     "dance" to ActionCommand.Dance,
     "ta nyckel" to ActionCommand.TakeKey
-
-
 )
 
 
@@ -106,7 +105,13 @@ fun main() {
     var event: Event = NewRoomEvent("Welcome!\n", startRoom)
     var currentRoom = startRoom
     while (event !is EndEvent){
-        StandardInOut.showText(formatGameTextAndItems(event.gameText, game.allItems.itemsIn(currentRoom)))
+
+        StandardInOut.showText(
+            if(event is RoomEvent) {
+                formatGameTextAndItems(event.gameText, game.allItems.itemsIn(currentRoom))
+            } else {
+                event.gameText
+            })
 
         val input:String = StandardInOut.waitForInput()
         event = game.playerDo(Input(Interpreter.interpret(input, input2Command, ActionCommand.GibberishInput)), currentRoom)
