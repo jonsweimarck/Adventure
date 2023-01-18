@@ -11,7 +11,7 @@ private val roomA = Room(
 private val roomB = Room(
     """
         |Du står på ett trädäck framför en villa. 
-        |En dörr leder in i huset.
+        |En stängd dörr leder in i huset.
     """.trimMargin())
 
 val startRoom = roomA
@@ -37,8 +37,7 @@ private var placementMap: Map<ItemType, Placement> = mapOf(
 )
 
 val itemUsageRoomMap: Map<ItemType, Room> = mapOf(
-    UnusedKey to roomA,
-    Bottle to roomB)
+    UnusedKey to roomB,)
 
 // Possible user input
 enum class ActionCommand: CommandType {
@@ -58,8 +57,10 @@ enum class ActionCommand: CommandType {
 val input2Command: Map<String, CommandType> = mapOf (
     "gå söder" to GoCommand.GoSouth,
     "söder" to GoCommand.GoSouth,
+    "s" to GoCommand.GoSouth,
     "gå norr" to GoCommand.GoNorth,
     "norr" to GoCommand.GoNorth,
+    "n" to GoCommand.GoNorth,
     "exit" to ActionCommand.EndGame,
     "dansa" to ActionCommand.Dance,
     "ta svärd" to ActionCommand.TakeSword,
@@ -68,16 +69,17 @@ val input2Command: Map<String, CommandType> = mapOf (
     "ta nyckel" to ActionCommand.TakeKey,
     "ta upp nyckel" to ActionCommand.TakeKey,
     "släpp nyckel" to ActionCommand.DropKey,
+    "använd nyckel" to ActionCommand.UseKey,
     "titta" to ActionCommand.LookAround,
     "inventory" to ActionCommand.Inventory,
     "i" to ActionCommand.Inventory,
 )
 
 // Mapping user inputs to what event-returning function to run
-data class KeyUsedSuccessfully(val newKey: Key) : Event("The was used successfully!")
-data class KeyAlreadyUsed(val newKey: Key) : Event("You have already used the key")
-object NoUsageOfKey : Event("You cannot use the key here!")
-object NoKeyToBeUsed : Event("You havn't got a key, have you?")
+data class KeyUsedSuccessfully(val newKey: Key) : Event("Du låser upp dörren med nyckeln.")
+data class KeyAlreadyUsed(val newKey: Key) : Event("Du har redan låst upp dörren.")
+object NoUsageOfKey : Event("Du kan inte använda en nyckel här.")
+object NoKeyToBeUsed : Event("Du har väl ingen nyckel?")
 
 
 val actionMap: Map<CommandType, (Input, Room, Items) -> Event> = mapOf(
@@ -106,12 +108,13 @@ fun useKey(input: Input, currentRoom: Room, items: Items): Event {
     if(items.usableItemsInRoom(currentRoom).filterIsInstance<Key>().isEmpty()){
         return NoUsageOfKey;
     }
-    val currentKey = items.usableItemsInRoom(currentRoom).filterIsInstance<Key>().first()
+    val currentKey = items.carriedItems().filterIsInstance<Key>().first()
 
-    if(currentKey == UsedKey) {
+    if(currentKey is UsedKey) {
         return KeyAlreadyUsed(currentKey)
     }
 
+    items.replaceCarried(currentKey, UsedKey)
     return KeyUsedSuccessfully(UsedKey);
 }
 

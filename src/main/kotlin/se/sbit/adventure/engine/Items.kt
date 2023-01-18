@@ -90,5 +90,16 @@ class Items(initialItemMap: ItemsPlacementMap, val itemUsageRoomMap: Map<ItemTyp
         return item;
     }
 
+    // Kan man göra denna eller hela itemMap unmutable?
+    fun replaceCarried(carriedItem: ItemType, replaceWith: ItemType): ItemType {
+        if(! carriedItems().contains(carriedItem)){
+            throw Exception("Tried to replace not carried item")
+        }
+
+        itemMap.put(replaceWith, Carried)
+        itemMap.remove(carriedItem)
+        return replaceWith
+    }
+
 }
 

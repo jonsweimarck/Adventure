@@ -3,6 +3,7 @@ package se.sbit.adventure.engine
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import se.sbit.adventure.engine.*
+import strikt.api.expectCatching
 import strikt.api.expectThat
 import strikt.assertions.*
 
@@ -26,6 +27,8 @@ class ActionsTest {
     sealed class MiscItems(override val description: String): ItemType
     object Sword: MiscItems("ett svärd")
     object Bottle: MiscItems("en flaska")
+    object UnusedThing: MiscItems("Oanvänd grej")
+    object UsedThing: MiscItems("Använd grej")
 
     sealed class Key(override val description: String): ItemType
     object UnusedKey: Key("Oanvänd nyckel")
@@ -34,6 +37,7 @@ class ActionsTest {
     private var placementMap: Map<ItemType, Placement> = mapOf(
         Sword to InRoom(roomA),
         UnusedKey to Carried,
+        UnusedThing to Carried,
         Bottle to Carried
     )
 
@@ -44,6 +48,8 @@ class ActionsTest {
     // Possible user input
     enum class ActionCommand: CommandType {
         UseKey,
+        UseThing,
+        UseNotCarriedThing,
         Dance
     }
 
@@ -53,6 +59,8 @@ class ActionsTest {
     object NoUsageOfKey : Event("You cannot use the key here!")
     object NoKeyToBeUsed : Event("You havn't got a key, have you?")
 
+    object ThingUsedSuccessfully : Event("The Thing was used successfully!")
+
     object DancingEvent: Event("Dance, dance, dance!")
 
     val actionMap: Map<CommandType, (Input, Room, Items) -> Event> = mapOf(
@@ -61,6 +69,8 @@ class ActionsTest {
         GoCommand.GoNorth to goActionFromRoomConnectionsMap(connectedRooms),
         GoCommand.GoSouth to goActionFromRoomConnectionsMap(connectedRooms),
         ActionCommand.UseKey to ::useKey,
+        ActionCommand.UseThing to ::useThing,
+        ActionCommand.UseNotCarriedThing to ::useUncarriedThing,
         ActionCommand.Dance to { _, _, _  -> DancingEvent })
 
 
@@ -72,7 +82,7 @@ class ActionsTest {
         if(items.usableItemsInRoom(currentRoom).filterIsInstance<Key>().isEmpty()){
             return NoUsageOfKey;
         }
-        val currentKey = items.usableItemsInRoom(currentRoom).filterIsInstance<Key>().first()
+        val currentKey = items.carriedItems().filterIsInstance<Key>().first()
 
         if(currentKey == UsedKey) {
             return KeyAlreadyUsed(currentKey)
@@ -81,7 +91,15 @@ class ActionsTest {
         return KeyUsedSuccessfully(UsedKey);
     }
 
+    fun useThing(input: Input, currentRoom: Room, items: Items): Event {
+        items.replaceCarried(UnusedThing, UsedThing)
+        return ThingUsedSuccessfully;
+    }
 
+    fun useUncarriedThing(input: Input, currentRoom: Room, items: Items): Event {
+        items.replaceCarried(Sword, UsedThing) // <- Should throw as we are not carrying a Sword
+        return ThingUsedSuccessfully;
+    }
 
 
     @Test
@@ -103,6 +121,30 @@ class ActionsTest {
         val event = game.playerDo(Input(ActionCommand.UseKey), currentRoom)
         expectThat(event).isA<KeyUsedSuccessfully>()
         expectThat((event as KeyUsedSuccessfully).newKey).isEqualTo(UsedKey)
+    }
+
+    @Test
+    fun `can do action that replaces carried item`() {
+        val currentRoom = roomA
+        val game = Game(connectedRooms, placementMap, actionMap, itemUsageRoomMap, currentRoom)
+
+        expectThat(game.allItems.carriedItems()).contains(UnusedThing)
+        expectThat(game.allItems.carriedItems()).doesNotContain(UsedThing)
+
+        game.playerDo(Input(ActionCommand.UseThing), currentRoom)
+
+        expectThat(game.allItems.carriedItems()).contains(UsedThing)
+        expectThat(game.allItems.carriedItems()).doesNotContain(UnusedThing)
+    }
+
+    @Test
+    fun `cannot do action that replaces carried item when item is not carried`() {
+        val currentRoom = roomA
+        val game = Game(connectedRooms, placementMap, actionMap, itemUsageRoomMap, currentRoom)
+
+        expectThat(game.allItems.carriedItems()).doesNotContain(Sword)
+
+        expectCatching {game.playerDo(Input(ActionCommand.UseNotCarriedThing), currentRoom)}.isFailure()
     }
 
     @Test
