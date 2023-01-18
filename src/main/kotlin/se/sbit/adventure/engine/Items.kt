@@ -16,6 +16,7 @@ class NoSuchItemHereEvent(gameText: String):Event(gameText)
 class PickedUpItemEvent(gameText: String):Event(gameText)
 class DroppedItemEvent(gameText: String):Event(gameText)
 class NoSuchItemToDropItemEvent(gameText: String):Event(gameText)
+class InventoryEvent(gameText: String):Event(gameText)
 
 fun goActionForPickUpItem(itemToPickUp:ItemType, noSuchItemHereEventText: String = "That didn't work!", pickedUpEventText: String = "Picked up"): (Input, Room, Items) -> Event
 {
@@ -38,6 +39,16 @@ fun goActionForDropItem(itemToDrop:ItemType, noSuchItemToDropEventText: String =
         return DroppedItemEvent("${droppedItemEventText} ${itemToDrop.description}.")
     }
 
+}
+
+fun goActionForInventory(notCarryingAnythingEventText: String = "You don't carry anything!", carryingEventText: String = "You carry"): (Input, Room, Items) -> Event
+{
+    return fun(input, currentRoom, items): Event {
+        if (items.carriedItems().isEmpty()) {
+            return InventoryEvent(notCarryingAnythingEventText)
+        }
+        return InventoryEvent( "${carryingEventText} ${items.carriedItems().joinToString { it.description }}")
+    }
 }
 
 class Items(initialItemMap: ItemsPlacementMap, val itemUsageRoomMap: Map<ItemType, Room>) {

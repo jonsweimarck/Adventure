@@ -42,10 +42,13 @@ val itemUsageRoomMap: Map<ItemType, Room> = mapOf(
 
 // Possible user input
 enum class ActionCommand: CommandType {
+    TakeSword,
+    DropSword,
     TakeKey,
     DropKey,
     UseKey,
     LookAround,
+    Inventory,
     Dance,
     GibberishInput,
     EndGame
@@ -59,10 +62,15 @@ val input2Command: Map<String, CommandType> = mapOf (
     "norr" to GoCommand.GoNorth,
     "exit" to ActionCommand.EndGame,
     "dansa" to ActionCommand.Dance,
+    "ta svärd" to ActionCommand.TakeSword,
+    "ta upp svärd" to ActionCommand.TakeSword,
+    "släpp svärd" to ActionCommand.DropSword,
     "ta nyckel" to ActionCommand.TakeKey,
     "ta upp nyckel" to ActionCommand.TakeKey,
     "släpp nyckel" to ActionCommand.DropKey,
-    "titta" to ActionCommand.LookAround
+    "titta" to ActionCommand.LookAround,
+    "inventory" to ActionCommand.Inventory,
+    "i" to ActionCommand.Inventory,
 )
 
 // Mapping user inputs to what event-returning function to run
@@ -81,9 +89,12 @@ val actionMap: Map<CommandType, (Input, Room, Items) -> Event> = mapOf(
     ActionCommand.Dance to { _, _, _  -> Event("Dance, dance, dance!")},
     ActionCommand.GibberishInput to { _, _, _  -> Event("Hmmm, det där förstod jag inte!") },
     ActionCommand.EndGame to { _, _, _  -> EndEvent },
-    ActionCommand.TakeKey to goActionForPickUpItem(UnusedKey, "Går inte att ta upp en sådan här!", "Tog upp"),
-    ActionCommand.DropKey to goActionForDropItem(UnusedKey, "Du har ingen sådan att släppa!", "Släppte"),
-    ActionCommand.LookAround to { _, currentRoom, _  -> SameRoomEvent("Du tittar dig omkring.", currentRoom)}
+    ActionCommand.TakeSword to goActionForPickUpItem(Sword, "Går inte att ta upp en sådan här!", "Du tar upp"),
+    ActionCommand.DropSword to goActionForDropItem(Sword, "Du har ingen sådan att släppa!", "Du släpper"),
+    ActionCommand.TakeKey to goActionForPickUpItem(UnusedKey, "Går inte att ta upp en sådan här!", "Du tar upp"),
+    ActionCommand.DropKey to goActionForDropItem(UnusedKey, "Du har ingen sådan att släppa!", "Du släpper"),
+    ActionCommand.LookAround to { _, currentRoom, _  -> SameRoomEvent("Du tittar dig omkring.", currentRoom)},
+    ActionCommand.Inventory to goActionForInventory("Du bär inte på något.", "Du bär på")
 )
 
 
