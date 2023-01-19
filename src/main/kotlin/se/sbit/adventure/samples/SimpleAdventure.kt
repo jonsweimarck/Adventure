@@ -68,10 +68,13 @@ sealed class Key(override val description: String): ItemType
 object UnusedKey: Key("en nyckel")
 object UsedKey: Key("en nyckel")
 
+object Chainsaw: MiscItems("en motorsåg")
+
 private var placementMap: Map<ItemType, Placement> = mapOf(
     UnusedKey to InRoom(garden),
     Sword to Carried,
-    Bottle to InRoom(garden)
+    Bottle to InRoom(garden),
+    Chainsaw to InRoom(insideLitRoom),
 )
 
 val itemUsageRoomMap: Map<ItemType, Room> = mapOf(
@@ -88,6 +91,8 @@ enum class ActionCommand: CommandType {
     ExitHouse,
     SwitchOnLight,
     SwitchOffLight,
+    TakeChainsaw,
+    DropChainsaw,
     LookAround,
     Inventory,
     Dance,
@@ -117,6 +122,12 @@ val input2Command: Map<String, CommandType> = mapOf (
     "gå ut" to ActionCommand.ExitHouse,
     "tänd lampan" to ActionCommand.SwitchOnLight,
     "släck lampan" to ActionCommand.SwitchOffLight,
+    "ta motorsåg" to ActionCommand.TakeChainsaw,
+    "ta motorsågen" to ActionCommand.TakeChainsaw,
+    "ta upp motorsåg" to ActionCommand.TakeChainsaw,
+    "ta upp motorsågen" to ActionCommand.TakeChainsaw,
+    "släpp motorsåg" to ActionCommand.DropChainsaw,
+    "släpp motorsågen" to ActionCommand.DropChainsaw,
     "titta" to ActionCommand.LookAround,
     "inventory" to ActionCommand.Inventory,
     "i" to ActionCommand.Inventory,
@@ -140,7 +151,7 @@ val actionMap: Map<CommandType, (Input, Room, Items) -> Event> = mapOf(
     ActionCommand.UseKey to ::useKey,
     ActionCommand.Dance to { _, _, _  -> Event("Dance, dance, dance!")},
     ActionCommand.GibberishInput to { _, _, _  -> Event("Hmmm, det där förstod jag inte!") },
-    ActionCommand.EndGame to { _, _, _  -> EndEvent },
+    ActionCommand.EndGame to { _, _, _  -> EndEvent ("Slutspelat!") },
     ActionCommand.TakeSword to goActionForPickUpItem(Sword, "Går inte att ta upp en sådan här!", "Du tar upp"),
     ActionCommand.DropSword to goActionForDropItem(Sword, "Du har ingen sådan att släppa!", "Du släpper"),
     ActionCommand.TakeKey to goActionForPickUpItem(UnusedKey, "Går inte att ta upp en sådan här!", "Du tar upp"),
@@ -149,6 +160,8 @@ val actionMap: Map<CommandType, (Input, Room, Items) -> Event> = mapOf(
     ActionCommand.ExitHouse to goActionFromRoomConnectionsMap(connectedRooms, "Du kan inte gå dit."),
     ActionCommand.SwitchOnLight to ::switchOnLight,
     ActionCommand.SwitchOffLight to ::switchOffLight,
+    ActionCommand.TakeChainsaw to ::takeChainsawOrDie,
+    ActionCommand.DropChainsaw to goActionForDropItem(Chainsaw, "Du har ingen sådan att släppa!", "Du släpper"),
     ActionCommand.LookAround to { _, currentRoom, _  -> SameRoomEvent("Du tittar dig omkring.", currentRoom)},
     ActionCommand.Inventory to goActionForInventory("Du bär inte på något.", "Du bär på")
 )
@@ -185,6 +198,14 @@ fun switchOffLight(input: Input, currentRoom: Room, items: Items): Event =
         else -> SameRoomEvent("Här? Hur då?", currentRoom)
     }
 
+fun takeChainsawOrDie(input: Input, currentRoom: Room, items: Items): Event =
+    if (currentRoom == insideDarkRoom && items.itemsIn(insideLitRoom).contains(Chainsaw))
+    {
+        EndEvent("Du ser inte vad du gör! I mörkret råkar du sätta på den! Oj! Hoppsan! Aj! \nDu blev till en hög av blod!")
+    } else {
+        goActionForPickUpItem(Chainsaw, "Går inte att ta upp en sådan här!", "Du tar upp").invoke(input, currentRoom, items)
+    }
+
 
 fun main() {
     println("**************  Simple Adventure ****************")
@@ -209,6 +230,8 @@ fun main() {
             currentRoom = event.newRoom
         }
     }
+
+    StandardInOut.showText(event.gameText)
 }
 
 fun formatGameTextAndItems(gameText: String, items: List<ItemType>): String =

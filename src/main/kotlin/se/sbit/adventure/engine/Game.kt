@@ -11,7 +11,7 @@ data class Input(val command: CommandType) // includes player, inventory, entere
 data class Room(val name: String) // Room with it's description, possible commands, ...
 
 open class Event(val gameText: String)
-object EndEvent:Event("Game over")
+open class EndEvent(gameEndText:String):Event(gameEndText)
 
 open class RoomEvent(gameText: String, val newRoom: Room) : Event("${gameText}\n${newRoom.name}")
 class NewRoomEvent(gameText: String, room: Room): RoomEvent(gameText, room)
