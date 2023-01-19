@@ -20,12 +20,14 @@ class RoomsAndConnectionTest {
     val roomD = Room("d")
 
     val connectionsMap = mapOf (
-        roomA to listOf(Pair(eastGuard, roomB),
-            Pair(westGuard or southGuard , roomC)),
-        roomB to listOf(Pair(westGuard, roomA),
-            Pair(northGuard, roomD)),
-        roomC to listOf(Pair(westGuard or northGuard, roomA)),
-        roomD to listOf(Pair(southGuard, roomB)),
+        roomA to listOf(
+            Pair(east, roomB),
+            Pair(west or south , roomC)),
+        roomB to listOf(
+            Pair(west, roomA),
+            Pair(north, roomD)),
+        roomC to listOf(Pair(west or north, roomA)),
+        roomD to listOf(Pair(south, roomB)),
     )
 
 

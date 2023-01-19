@@ -3,10 +3,10 @@ package se.sbit.adventure.engine
 
 typealias Guard = (Input, Room) -> Boolean
 
-val northGuard: Guard = { input, _ -> (input.command == GoCommand.GoNorth)}
-val eastGuard: Guard = { input, _ -> (input.command == GoCommand.GoEast)}
-val southGuard: Guard = { input, _ -> (input.command == GoCommand.GoSouth)}
-val westGuard: Guard = { input, _ -> (input.command == GoCommand.GoWest)}
+val north: Guard = { input, _ -> (input.command == GoCommand.GoNorth)}
+val east: Guard = { input, _ -> (input.command == GoCommand.GoEast)}
+val south: Guard = { input, _ -> (input.command == GoCommand.GoSouth)}
+val west: Guard = { input, _ -> (input.command == GoCommand.GoWest)}
 
 
 infix fun Guard.and(g2: Guard): Guard {

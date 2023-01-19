@@ -36,19 +36,19 @@ val startRoom = garden
 
 private val connectedRooms = mapOf(
     garden to listOf(
-        Pair(southGuard and ::doorIsClosed, inFrontOfClosedDoor),
-        Pair(southGuard and ::doorIsOpened, inFrontOfOpenDoor)),
-    inFrontOfClosedDoor to listOf(Pair(northGuard, garden)),
+        Pair(south and ::doorIsClosed, inFrontOfClosedDoor),
+        Pair(south and ::doorIsOpened, inFrontOfOpenDoor)),
+    inFrontOfClosedDoor to listOf(Pair(north, garden)),
     inFrontOfOpenDoor to listOf(
-        Pair(northGuard, garden),
+        Pair(north, garden),
         Pair(::enterRoom and ::lightIsOff, insideDarkRoom),
         Pair(::enterRoom and ::lightIsOn, insideLitRoom)),
     insideDarkRoom to listOf(
-        Pair(northGuard or ::exitRoom, inFrontOfOpenDoor),
+        Pair(north or ::exitRoom, inFrontOfOpenDoor),
         Pair(::lightIsOn, insideLitRoom)),
     insideLitRoom to listOf(
         Pair(::lightIsOff, insideDarkRoom),
-        Pair(northGuard or ::exitRoom, inFrontOfOpenDoor)),
+        Pair(north or ::exitRoom, inFrontOfOpenDoor)),
 )
 
 fun doorIsOpened(input: Input, room: Room): Boolean = ! doorIsClosed(input, room)

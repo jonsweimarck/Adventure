@@ -19,8 +19,8 @@ class ActionsTest {
     private val roomB = Room("b")
 
     private val connectedRooms = mapOf(
-        roomA to listOf(Pair(southGuard, roomB)),
-        roomB to listOf(Pair(northGuard, roomA))
+        roomA to listOf(Pair(south, roomB)),
+        roomB to listOf(Pair(north, roomA))
     )
 
     // All Items, as well as where they are placed, and in what rooms they can be used
