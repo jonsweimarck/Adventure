@@ -3,23 +3,36 @@ package se.sbit.adventure.samples
 import se.sbit.adventure.engine.*
 
 // Setting up two rooms, connected North-South
-private val roomA = Room(
+private val garden = Room(
     """
         |Du står på en gräsmatta i en villaträdgård. 
         |Trädgården har höga häckar åt tre väderstreck, och åt söder ligger villan.
     """.trimMargin())
-private val roomB = Room(
+private val inFrontOfClosedDoor = Room(
     """
         |Du står på ett trädäck framför en villa. 
         |En stängd dörr leder in i huset.
     """.trimMargin())
 
-val startRoom = roomA
+private val inFrontOfOpenDoor = Room(
+    """
+        |Du står på ett trädäck framför en villa. 
+        |En öppen dörr leder in i huset.
+    """.trimMargin())
+
+val startRoom = garden
 
 private val connectedRooms = mapOf(
-    roomA to listOf(Pair(southGuard, roomB)),
-    roomB to listOf(Pair(northGuard, roomA))
+    garden to listOf(
+        Pair(southGuard and ::doorIsClosed, inFrontOfClosedDoor),
+        Pair(southGuard and ::doorIsOpened, inFrontOfOpenDoor)),
+    inFrontOfClosedDoor to listOf(Pair(northGuard, garden)),
+    inFrontOfOpenDoor to listOf(Pair(northGuard, garden))
 )
+
+fun doorIsOpened(input: Input, room: Room): Boolean = ! doorIsClosed(input, room)
+fun doorIsClosed(input: Input, room: Room): Boolean = EventLog.log().filterIsInstance<KeyUsedSuccessfully>().isEmpty()
+
 
 // All Items, as well as where they are placed, and in what rooms they can be used
 sealed class MiscItems(override val description: String): ItemType
@@ -31,13 +44,13 @@ object UnusedKey: Key("en nyckel")
 object UsedKey: Key("en nyckel")
 
 private var placementMap: Map<ItemType, Placement> = mapOf(
-    UnusedKey to InRoom(roomA),
+    UnusedKey to InRoom(garden),
     Sword to Carried,
-    Bottle to InRoom(roomA)
+    Bottle to InRoom(garden)
 )
 
 val itemUsageRoomMap: Map<ItemType, Room> = mapOf(
-    UnusedKey to roomB,)
+    UnusedKey to inFrontOfClosedDoor,)
 
 // Possible user input
 enum class ActionCommand: CommandType {
@@ -76,8 +89,8 @@ val input2Command: Map<String, CommandType> = mapOf (
 )
 
 // Mapping user inputs to what event-returning function to run
-data class KeyUsedSuccessfully(val newKey: Key) : Event("Du låser upp dörren med nyckeln.")
-data class KeyAlreadyUsed(val newKey: Key) : Event("Du har redan låst upp dörren.")
+class KeyUsedSuccessfully(newRoom: Room) : RoomEvent("Du låser upp och öppnar dörren.", newRoom)
+object KeyAlreadyUsed : Event("Du har redan låst upp dörren.")
 object NoUsageOfKey : Event("Du kan inte använda en nyckel här.")
 object NoKeyToBeUsed : Event("Du har väl ingen nyckel?")
 
@@ -111,11 +124,12 @@ fun useKey(input: Input, currentRoom: Room, items: Items): Event {
     val currentKey = items.carriedItems().filterIsInstance<Key>().first()
 
     if(currentKey is UsedKey) {
-        return KeyAlreadyUsed(currentKey)
+        return KeyAlreadyUsed
     }
 
     items.replaceCarried(currentKey, UsedKey)
-    return KeyUsedSuccessfully(UsedKey);
+
+    return KeyUsedSuccessfully(inFrontOfOpenDoor)
 }
 
 
@@ -137,6 +151,7 @@ fun main() {
 
         val input:String = StandardInOut.waitForInput()
         event = game.playerDo(Input(Interpreter.interpret(input, input2Command, ActionCommand.GibberishInput)), currentRoom)
+        EventLog.add(event)
         if(event is RoomEvent) {
             currentRoom = event.newRoom
         }
