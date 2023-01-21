@@ -26,6 +26,8 @@ class InterpreterTest {
 
     @Test
     fun `use regexp, but I as a programmer must tinker a bit to see what works`(){
+
+        //----------- go ---------------
         // optional chars at start
         var regex = ".*go north".toRegex(RegexOption.IGNORE_CASE)
         expectThat(regex.matches("abgo north")).isEqualTo(true)
@@ -48,5 +50,17 @@ class InterpreterTest {
         expectThat(regex.matches("gonorth")).isEqualTo(false)
         expectThat(regex.matches("go")).isEqualTo(false)
 
+        // ------- pick up/drop ------------
+        regex = "pick (up )?(the )?sword".toRegex(RegexOption.IGNORE_CASE)
+        expectThat(regex.matches("pick up sword")).isEqualTo(true)
+        expectThat(regex.matches("pick sword")).isEqualTo(true)
+        expectThat(regex.matches("pick up sword")).isEqualTo(true)
+        expectThat(regex.matches("pick up the sword")).isEqualTo(true)
+
+        // ------- exit game ------------
+        regex = "((exit( game)?)|bye)".toRegex(RegexOption.IGNORE_CASE)
+        expectThat(regex.matches("exit")).isEqualTo(true)
+        expectThat(regex.matches("exit game")).isEqualTo(true)
+        expectThat(regex.matches("bye")).isEqualTo(true)
     }
 }
