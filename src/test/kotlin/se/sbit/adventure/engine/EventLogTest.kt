@@ -11,7 +11,7 @@ class EventLogTest {
 
     @Test
     fun `an event can be added`(){
-        EventLog.add(EndEvent)
+        EventLog.add(EndEvent("Game Over"))
 
         expectThat(EventLog.log().size).isEqualTo(1)
         expectThat(EventLog.log()[0]).isA<EndEvent>()
