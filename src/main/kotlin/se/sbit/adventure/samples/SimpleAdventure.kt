@@ -60,6 +60,8 @@ private val connectedRooms = mapOf(
     inFrontOfOpenDoor to listOf(
         Pair(north and ::hedgeIsNotSawnDown, garden),
         Pair(north and ::hedgeIsSawnDown, gardenWithSawnDownHedge),
+        Pair(south  and ::lightIsOff, insideDarkRoom),
+        Pair(south  and ::lightIsOn, insideLitRoom),
         Pair(::enterRoom and ::lightIsOff, insideDarkRoom),
         Pair(::enterRoom and ::lightIsOn, insideLitRoom)),
     insideDarkRoom to listOf(
@@ -112,36 +114,40 @@ enum class ActionCommand: CommandType {
     ExitHouse,
     SwitchOnLight,
     SwitchOffLight,
+    TakeLamp,
     TakeChainsaw,
     DropChainsaw,
     SawDownHedge,
     LookAround,
     Inventory,
-    Dance,
     GibberishInput,
-    EndGame
+    EndGame,
+    Dance,
+    Smash,
 }
 
 
 val stringinput2Command: Map<String, CommandType> = mapOf (
-    "(gå )?s(öder)?" to GoCommand.GoSouth,
-    "(gå )?n(orr)?" to GoCommand.GoNorth,
+    "((gå (åt )?)?s(öder)?|gå söderut)" to GoCommand.GoSouth,
+    "((gå (åt )?)?n(orr)?|gå söderut)" to GoCommand.GoNorth,
     "(exit( game)?|(av)?sluta|bye|hej( då|då))" to ActionCommand.EndGame,
-    "dansa" to ActionCommand.Dance,
-    "ta (upp )?svärd(et)?" to ActionCommand.TakeSword,
+    "(ta |plocka )(upp )?svärd(et)?" to ActionCommand.TakeSword,
     "släpp svärd(et)?" to ActionCommand.DropSword,
-    "ta (upp )?nyckel(n)?" to ActionCommand.TakeKey,
+    "(ta |plocka )(upp )?nyckel(n)?" to ActionCommand.TakeKey,
     "släpp nyckel(n)?" to ActionCommand.DropKey,
-    "(öppna dörr(en)?|använd nyckel(n)?|lås upp( dörren?))" to ActionCommand.UseKey,
-    "gå in.*" to ActionCommand.EnterHouse,
+    "(öppna dörr(en)?|använd nyckel(n)?|lås upp( dörren?)?)" to ActionCommand.UseKey,
+    "(gå in.*|gå till villan)" to ActionCommand.EnterHouse,
     "gå ut.*" to ActionCommand.ExitHouse,
     "tänd lampa(n)?" to ActionCommand.SwitchOnLight,
     "släck lampa(n)?" to ActionCommand.SwitchOffLight,
-    "ta (upp )?motorsåg(en)?" to ActionCommand.TakeChainsaw,
+    "(ta |plocka )(upp )?(golv)?lampa(n)?" to ActionCommand.TakeLamp,
+    "(ta |plocka )(upp )?motorsåg(en)?" to ActionCommand.TakeChainsaw,
     "släpp motorsåg(en)?" to ActionCommand.DropChainsaw,
-    "såga (ner )?häck(en)?" to ActionCommand.SawDownHedge,
+    "(såga (ner )?häck(en)?|använd motorsåg(en)?)" to ActionCommand.SawDownHedge,
     "titta( omkring| runt)?" to ActionCommand.LookAround,
     "i(nventory)?" to ActionCommand.Inventory,
+    "dansa" to ActionCommand.Dance,
+    "(krossa |slå sönder |mosa ).*" to ActionCommand.Smash,
 )
 
 val input2Command = stringinput2Command.entries.associate { Pair(it.key.toRegex(RegexOption.IGNORE_CASE), it.value) }
@@ -164,7 +170,6 @@ val actionMap: Map<CommandType, (Input, Room, Items) -> Event> = mapOf(
     GoCommand.GoNorth to goActionFromRoomConnectionsMap(connectedRooms,"Du kan inte gå dit."),
     GoCommand.GoSouth to goActionFromRoomConnectionsMap(connectedRooms,"Du kan inte gå dit."),
     ActionCommand.UseKey to ::useKey,
-    ActionCommand.Dance to { _, _, _  -> Event("Dance, dance, dance!")},
     ActionCommand.GibberishInput to { _, _, _  -> Event("Hmmm, det där förstod jag inte!") },
     ActionCommand.EndGame to { _, _, _  -> EndEvent ("Slutspelat!") },
     ActionCommand.TakeSword to goActionForPickUpItem(Sword, "Går inte att ta upp en sådan här!", "Du tar upp"),
@@ -175,11 +180,14 @@ val actionMap: Map<CommandType, (Input, Room, Items) -> Event> = mapOf(
     ActionCommand.ExitHouse to goActionFromRoomConnectionsMap(connectedRooms, "Du kan inte gå dit."),
     ActionCommand.SwitchOnLight to ::switchOnLight,
     ActionCommand.SwitchOffLight to ::switchOffLight,
+    ActionCommand.TakeLamp to ::takeLamp,
     ActionCommand.TakeChainsaw to ::takeChainsawOrDie,
     ActionCommand.DropChainsaw to goActionForDropItem(Chainsaw, "Du har ingen sådan att släppa!", "Du släpper"),
     ActionCommand.SawDownHedge to ::sawDownHedge,
     ActionCommand.LookAround to { _, currentRoom, _  -> SameRoomEvent("Du tittar dig omkring.", currentRoom)},
-    ActionCommand.Inventory to goActionForInventory("Du bär inte på något.", "Du bär på")
+    ActionCommand.Inventory to goActionForInventory("Du bär inte på något.", "Du bär på"),
+    ActionCommand.Dance to { _, _, _  -> Event("Dance, dance, dance!")},
+    ActionCommand.Smash to { _, _, _  -> Event("Så där gör man bara inte! Det kan räknas som skadegörelse och vara straffbart med böter eller fängelse enligt Brottbalken 12 kap. 1 §!")},
 )
 
 
@@ -223,11 +231,22 @@ fun takeChainsawOrDie(input: Input, currentRoom: Room, items: Items): Event =
     }
 
 fun sawDownHedge(input: Input, currentRoom: Room, items: Items): Event =
-    when(currentRoom){
-        gardenWithSawnDownHedge -> SameRoomEvent("Nä, de kvarvarande häckarna går inte att såga ner av någon mystisk anledning", currentRoom)
-        garden -> HedgeSawnDownEvent()
-        else -> SameRoomEvent("Här? Hur då?", currentRoom)
+    if(items.carriedItems().contains(Chainsaw)){
+        when(currentRoom){
+            gardenWithSawnDownHedge -> SameRoomEvent("Nä, de kvarvarande häckarna går inte att såga ner av någon mystisk anledning", currentRoom)
+            garden -> HedgeSawnDownEvent()
+            else -> SameRoomEvent("Du sätter igång motorsågen och viftar med den i luften. Wrooom, wroom! Du känner inte för att såga i något av det du ser, så du stänger av den igen.", currentRoom)
+        }
+    }else{
+        Event("Nu går du väl ändå händelserna i förväg? Du har ju inget att såga med!")
     }
+
+fun takeLamp(input: Input, currentRoom: Room, items: Items): Event =
+    when(currentRoom){
+        insideLitRoom, insideDarkRoom -> Event("Du rycker och sliter, men lampan verkar fastsatt i golvet. Eller så är du bara väldigt svag!")
+        else -> SameRoomEvent("Var ser du en lampa att ta?", currentRoom)
+    }
+
 
 fun main() {
     println("**************  Simple Adventure ****************")
