@@ -97,7 +97,7 @@ class ActionsTest {
     }
 
     fun useUncarriedThing(input: Input, currentRoom: Room, items: Items): Event {
-        items.replaceCarried(Sword, UsedThing) // <- Should throw as we are not carrying a Sword
+        items.replaceCarried(Sword, UsedThing) // <- Should throw as we are not carrying a Receipt
         return ThingUsedSuccessfully;
     }
 

@@ -84,8 +84,7 @@ fun hedgeIsSawnDown(input: Input, room: Room): Boolean = ! hedgeIsNotSawnDown(in
 
 // All Items, as well as where they are placed, and in what rooms they can be used
 sealed class MiscItems(override val description: String): ItemType
-object Sword: MiscItems("ett svärd")
-object Bottle: MiscItems("en flaska")
+object Receipt: MiscItems("ett kvitto")
 
 sealed class Key(override val description: String): ItemType
 object UnusedKey: Key("en nyckel")
@@ -95,8 +94,7 @@ object Chainsaw: MiscItems("en motorsåg")
 
 private var placementMap: Map<ItemType, Placement> = mapOf(
     UnusedKey to InRoom(garden),
-    Sword to Carried,
-//    Bottle to InRoom(garden),
+    Receipt to Carried,
     Chainsaw to InRoom(insideLitRoom),
 )
 
@@ -105,8 +103,9 @@ val itemUsageRoomMap: Map<ItemType, Room> = mapOf(
 
 // Possible user input
 enum class ActionCommand: CommandType {
-    TakeSword,
-    DropSword,
+    TakeReceipt,
+    DropReceipt,
+    ReadReceipt,
     TakeKey,
     DropKey,
     UseKey,
@@ -131,8 +130,9 @@ val stringinput2Command: Map<String, CommandType> = mapOf (
     "((gå (åt )?)?s(öder)?|gå söderut)" to GoCommand.GoSouth,
     "((gå (åt )?)?n(orr)?|gå söderut)" to GoCommand.GoNorth,
     "(exit( game)?|(av)?sluta|bye|hej( då|då))" to ActionCommand.EndGame,
-    "(ta |plocka )(upp )?svärd(et)?" to ActionCommand.TakeSword,
-    "släpp svärd(et)?" to ActionCommand.DropSword,
+    "(ta |plocka )(upp )?kvitto(t)?" to ActionCommand.TakeReceipt,
+    "släpp kvitto(t)?" to ActionCommand.DropReceipt,
+    "(Läs |Undersök |titta (på ))kvitto(t)?" to ActionCommand.ReadReceipt,
     "(ta |plocka )(upp )?nyckel(n)?" to ActionCommand.TakeKey,
     "släpp nyckel(n)?" to ActionCommand.DropKey,
     "(öppna dörr(en)?|använd nyckel(n)?|lås upp( dörren?)?)" to ActionCommand.UseKey,
@@ -172,8 +172,9 @@ val actionMap: Map<CommandType, (Input, Room, Items) -> Event> = mapOf(
     ActionCommand.UseKey to ::useKey,
     ActionCommand.GibberishInput to { _, _, _  -> Event("Hmmm, det där förstod jag inte!") },
     ActionCommand.EndGame to { _, _, _  -> EndEvent ("Slutspelat!") },
-    ActionCommand.TakeSword to goActionForPickUpItem(Sword, "Går inte att ta upp en sådan här!", "Du tar upp"),
-    ActionCommand.DropSword to goActionForDropItem(Sword, "Du har ingen sådan att släppa!", "Du släpper"),
+    ActionCommand.TakeReceipt to goActionForPickUpItem(Receipt, "Går inte att ta upp en sådan här!", "Du tar upp"),
+    ActionCommand.DropReceipt to goActionForDropItem(Receipt, "Du har ingen sådan att släppa!", "Du släpper"),
+    ActionCommand.ReadReceipt to ::readReceipt,
     ActionCommand.TakeKey to goActionForPickUpItem(UnusedKey, "Går inte att ta upp en sådan här!", "Du tar upp"),
     ActionCommand.DropKey to goActionForDropItem(UnusedKey, "Du har ingen sådan att släppa!", "Du släpper"),
     ActionCommand.EnterHouse to goActionFromRoomConnectionsMap(connectedRooms, "Du kan inte gå dit."),
@@ -246,6 +247,12 @@ fun takeLamp(input: Input, currentRoom: Room, items: Items): Event =
         insideLitRoom, insideDarkRoom -> Event("Du rycker och sliter, men lampan verkar fastsatt i golvet. Eller så är du bara väldigt svag!")
         else -> SameRoomEvent("Var ser du en lampa att ta?", currentRoom)
     }
+
+fun readReceipt(input: Input, currentRoom: Room, items: Items): Event =
+        when(items.carriedItems().contains(Receipt)){
+            true -> Event("Oh! Du har tydligen handlat mjölk, ost, yoghurt och skivbar leverpastej för några veckor sedan.")
+            false -> Event("Det går inte, för du har lagt det nånstans.")
+        }
 
 
 fun main() {
