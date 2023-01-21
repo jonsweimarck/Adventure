@@ -12,7 +12,7 @@ class InterpreterTest {
 
     @Test
     fun `parse user input with regexp`(){
-        val input2Command = mapOf<String, CommandType>("(go )?n(orth)?" to GoCommand.GoNorth)
+        val input2Command = mapOf<Regex, CommandType>("(go )?n(orth)?".toRegex(RegexOption.IGNORE_CASE) to GoCommand.GoNorth)
 
         // These should be parsed ok and return back the GoNorth command
         expectThat(Interpreter.interpret("go north", input2Command, gibberishCommand)).isEqualTo(GoCommand.GoNorth)

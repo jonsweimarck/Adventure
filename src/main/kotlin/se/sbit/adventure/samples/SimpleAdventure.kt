@@ -101,7 +101,7 @@ enum class ActionCommand: CommandType {
 }
 
 
-val input2Command: Map<String, CommandType> = mapOf (
+val stringinput2Command: Map<String, CommandType> = mapOf (
     "(gå )?s(öder)?" to GoCommand.GoSouth,
     "(gå )?n(orr)?" to GoCommand.GoNorth,
     "(exit( game)?|(av)?sluta|bye|hej( då|då))" to ActionCommand.EndGame,
@@ -121,6 +121,8 @@ val input2Command: Map<String, CommandType> = mapOf (
     "titta( omkring| runt)?" to ActionCommand.LookAround,
     "i(nventory)?" to ActionCommand.Inventory,
 )
+
+val input2Command = stringinput2Command.entries.associate { Pair(it.key.toRegex(RegexOption.IGNORE_CASE), it.value) }
 
 // Mapping user inputs to what event-returning function to run
 class KeyUsedSuccessfully(newRoom: Room) : RoomEvent("Du låser upp och öppnar dörren.", newRoom)
