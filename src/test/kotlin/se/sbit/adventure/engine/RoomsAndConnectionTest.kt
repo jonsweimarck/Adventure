@@ -18,7 +18,6 @@ class RoomsAndConnectionTest {
     val roomB = Room("b")
     val roomC = Room("c")
     val roomD = Room("d")
-    val roomE = Room("e1", "e2") { items, eventLog -> ! eventLog.log().isEmpty() } // <- use altDescription if the eventlog is not empty
 
     val connectionsMap = mapOf (
         roomA to listOf(
@@ -31,12 +30,21 @@ class RoomsAndConnectionTest {
         roomD to listOf(Pair(south, roomB)),
     )
 
+    // No states in the rooms
+    val alwaysPass = { _: Input, _: Room -> true}
+    private val roomStates = mapOf(
+        roomA to listOf(Pair(alwaysPass, roomA)),
+        roomB to listOf(Pair(alwaysPass, roomB)),
+        roomC to listOf(Pair(alwaysPass, roomC)),
+        roomD to listOf(Pair(alwaysPass, roomD))
+    )
+
 
     val actionMap: Map<CommandType, (Input, Room, Room, Items) -> Event> = mapOf(
-        GoCommand.GoEast to goActionFromRoomConnectionsMap(connectionsMap),
-        GoCommand.GoWest to goActionFromRoomConnectionsMap(connectionsMap),
-        GoCommand.GoNorth to goActionFromRoomConnectionsMap(connectionsMap),
-        GoCommand.GoSouth to goActionFromRoomConnectionsMap(connectionsMap)
+        GoCommand.GoEast to goActionFromRoomConnectionsMap(connectionsMap, roomStates),
+        GoCommand.GoWest to goActionFromRoomConnectionsMap(connectionsMap, roomStates),
+        GoCommand.GoNorth to goActionFromRoomConnectionsMap(connectionsMap, roomStates),
+        GoCommand.GoSouth to goActionFromRoomConnectionsMap(connectionsMap, roomStates),
     )
 
     @Test
@@ -71,16 +79,5 @@ class RoomsAndConnectionTest {
         val goNorthEvent = game.playerDo(Input(GoCommand.GoNorth), roomA, roomA)
         expectThat(goNorthEvent).isA<SameRoomEvent>()
         expectThat((goNorthEvent as SameRoomEvent).newRoom ).isEqualTo(roomA)
-    }
-
-    @Test
-    fun `can show alternative room description`() {
-        val game = Game(connectionsMap, actionMap = actionMap, startRoom = roomE, startState = roomE)
-
-        expectThat(game.startRoom.roomDescription(game.allItems, game.eventlog)).isEqualTo("e1")
-
-        game.eventlog.add(object: Event("Some Event"){})
-
-        expectThat(game.startRoom.roomDescription(game.allItems, game.eventlog)).isEqualTo("e2")
     }
 }

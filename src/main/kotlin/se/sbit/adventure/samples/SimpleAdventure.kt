@@ -131,13 +131,13 @@ object UsedKey: Key("en nyckel")
 object Chainsaw: MiscItems("en motorsåg")
 
 private var placementMap: Map<ItemType, Placement> = mapOf(
-    UnusedKey to InRoom(garden),
+    UnusedKey to InRoom(gardenCompound),
     Receipt to Carried,
-    Chainsaw to InRoom(insideLitRoom),
+    Chainsaw to InRoom(inside),
 )
 
-val itemUsageRoomMap: Map<ItemType, Room> = mapOf(
-    UnusedKey to inFrontOfClosedDoor,)
+val itemUsageRoomMap: Map<ItemType, Room> = mapOf(          // Todo borde tas bort, sköts i action-funktionerna
+    UnusedKey to inFrontOfDooor,)
 
 // Possible user input
 enum class ActionCommand: CommandType {

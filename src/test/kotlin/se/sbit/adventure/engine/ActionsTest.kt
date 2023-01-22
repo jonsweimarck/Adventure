@@ -23,6 +23,13 @@ class ActionsTest {
         roomB to listOf(Pair(north, roomA))
     )
 
+    // No states in the rooms
+    val alwaysPass = { _: Input, _: Room -> true}
+    private val roomStates = mapOf(
+        roomA to listOf(Pair(alwaysPass, roomA)),
+        roomB to listOf(Pair(alwaysPass, roomB))
+    )
+
     // All Items, as well as where they are placed, and in what rooms they can be used
     sealed class MiscItems(override val description: String): ItemType
     object Sword: MiscItems("ett svärd")
@@ -64,10 +71,10 @@ class ActionsTest {
     object DancingEvent: Event("Dance, dance, dance!")
 
     val actionMap: Map<CommandType, (Input, Room, Room, Items) -> Event> = mapOf(
-        GoCommand.GoEast to goActionFromRoomConnectionsMap(connectedRooms),
-        GoCommand.GoWest to goActionFromRoomConnectionsMap(connectedRooms),
-        GoCommand.GoNorth to goActionFromRoomConnectionsMap(connectedRooms),
-        GoCommand.GoSouth to goActionFromRoomConnectionsMap(connectedRooms),
+        GoCommand.GoEast to goActionFromRoomConnectionsMap(connectedRooms,roomStates),
+        GoCommand.GoWest to goActionFromRoomConnectionsMap(connectedRooms,roomStates),
+        GoCommand.GoNorth to goActionFromRoomConnectionsMap(connectedRooms,roomStates),
+        GoCommand.GoSouth to goActionFromRoomConnectionsMap(connectedRooms,roomStates),
         ActionCommand.UseKey to ::useKey,
         ActionCommand.UseThing to ::useThing,
         ActionCommand.UseNotCarriedThing to ::useUncarriedThing,

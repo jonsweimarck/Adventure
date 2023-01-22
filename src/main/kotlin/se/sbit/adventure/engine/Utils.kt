@@ -46,7 +46,7 @@ fun goActionFromRoomConnectionsMap(connectionsMap: RoomConnectionsMap,
             // No state matches!
             return SameRoomEvent(sameRoomEventText , currentRoom, currentState)
         }
-        val newState = roomStates[roomIndex].second
+        val newState = roomStates[stateIndex].second
 
         return NewRoomEvent("", newRoom, newState)
     }
