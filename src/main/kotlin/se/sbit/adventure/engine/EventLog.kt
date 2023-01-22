@@ -1,6 +1,6 @@
 package se.sbit.adventure.engine
 
-object EventLog {
+class EventLog {
     private var events: List<Event> = emptyList()
 
     fun log() = events.toList()
@@ -9,6 +9,5 @@ object EventLog {
         events = events.plus(event)
         return events
     }
-
 
 }

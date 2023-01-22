@@ -18,9 +18,9 @@ class DroppedItemEvent(gameText: String):Event(gameText)
 class NoSuchItemToDropItemEvent(gameText: String):Event(gameText)
 class InventoryEvent(gameText: String):Event(gameText)
 
-fun goActionForPickUpItem(itemToPickUp:ItemType, noSuchItemHereEventText: String = "That didn't work!", pickedUpEventText: String = "Picked up"): (Input, Room, Items) -> Event
+fun goActionForPickUpItem(itemToPickUp:ItemType, noSuchItemHereEventText: String = "That didn't work!", pickedUpEventText: String = "Picked up"): (Input, Room, Room, Items) -> Event
 {
-    return fun(input, currentRoom, items): Event {
+    return fun(input, currentRoom, currentState, items): Event {
         if (items.itemsIn(currentRoom).none { it == itemToPickUp }){
             return NoSuchItemHereEvent(noSuchItemHereEventText)
         }
@@ -29,9 +29,9 @@ fun goActionForPickUpItem(itemToPickUp:ItemType, noSuchItemHereEventText: String
     }
 }
 
-fun goActionForDropItem(itemToDrop:ItemType, noSuchItemToDropEventText: String = "That didn't work!", droppedItemEventText: String = "Dropped"): (Input, Room, Items) -> Event
+fun goActionForDropItem(itemToDrop:ItemType, noSuchItemToDropEventText: String = "That didn't work!", droppedItemEventText: String = "Dropped"): (Input, Room, Room, Items) -> Event
 {
-    return fun(input, currentRoom, items): Event {
+    return fun(input, currentRoom, currentState, items): Event {
         if (items.carriedItems().none { it == itemToDrop }){
             return NoSuchItemToDropItemEvent(noSuchItemToDropEventText)
         }
@@ -41,9 +41,9 @@ fun goActionForDropItem(itemToDrop:ItemType, noSuchItemToDropEventText: String =
 
 }
 
-fun goActionForInventory(notCarryingAnythingEventText: String = "You don't carry anything!", carryingEventText: String = "You carry"): (Input, Room, Items) -> Event
+fun goActionForInventory(notCarryingAnythingEventText: String = "You don't carry anything!", carryingEventText: String = "You carry"): (Input, Room, Room, Items) -> Event
 {
-    return fun(input, currentRoom, items): Event {
+    return fun(input, currentRoom, currentState, items): Event {
         if (items.carriedItems().isEmpty()) {
             return InventoryEvent(notCarryingAnythingEventText)
         }

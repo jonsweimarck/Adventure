@@ -17,9 +17,9 @@ infix fun Guard.or(g2: Guard): Guard {
     return {input, room -> this.invoke(input, room) || g2(input, room)}
 }
 
-fun goActionFromRoomConnectionsMap(connectionsMap: RoomConnectionsMap, sameRoomEventText: String = "That didn't work!"): (Input, Room, Items) -> Event
+fun goActionFromRoomConnectionsMap(connectionsMap: RoomConnectionsMap, sameRoomEventText: String = "That didn't work!"): (Input, Room, Room, Items) -> Event
 {
-    return fun(input, currentRoom, items): Event {
+    return fun(input, currentRoom, currentState, items): Event {
         val roomConnections = connectionsMap.getOrElse(currentRoom) {
             // Should neeeeeever happen.The room has no connections!
             return SameRoomEvent(sameRoomEventText , currentRoom)
