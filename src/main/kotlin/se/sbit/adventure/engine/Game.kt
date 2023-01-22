@@ -9,21 +9,14 @@ enum class GoCommand: CommandType {
 
 data class Input(val command: CommandType)
 
-data class Room(val description: String, val altDescription: String = "N/A", val predicateToUseAltDesc: (Items, EventLog)-> Boolean = { _, _ -> false}) {
-
-    fun roomDescription(items: Items, eventlog: EventLog): String =
-        when(predicateToUseAltDesc.invoke(items, eventlog)){
-            false -> description
-            true -> altDescription
-        }
-}
+data class Room(val description: String, val states: List<Pair<(Input, Room, Room, Items) -> Event, Room>> = emptyList())
 
 open class Event(val gameText: String)
 open class EndEvent(gameEndText:String):Event(gameEndText)
 
-open class RoomEvent(gameText: String, val newRoom: Room) : Event("${gameText}\n${newRoom.description}")
-class NewRoomEvent(gameText: String, room: Room): RoomEvent(gameText, room)
-class SameRoomEvent(gameText: String, room: Room): RoomEvent(gameText, room)
+open class RoomEvent(gameText: String, val newRoom: Room, val newState: Room) : Event("${gameText}\n${newState.description}")
+class NewRoomEvent(gameText: String, newRoom: Room, newState: Room): RoomEvent(gameText, newRoom, newState)
+class SameRoomEvent(gameText: String, room: Room, state: Room): RoomEvent(gameText, room, state)
 
 typealias RoomConnectionsMap =  Map<Room, List<Pair<Guard, Room>>>
 

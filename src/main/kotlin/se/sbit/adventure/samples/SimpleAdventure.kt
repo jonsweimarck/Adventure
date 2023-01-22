@@ -191,22 +191,22 @@ val stringinput2Command: Map<String, CommandType> = mapOf (
 val input2Command = stringinput2Command.entries.associate { Pair(it.key.toRegex(RegexOption.IGNORE_CASE), it.value) }
 
 // Mapping user inputs to what event-returning function to run
-class KeyUsedSuccessfully(newRoom: Room) : RoomEvent("Du låser upp och öppnar dörren.", newRoom)
+class KeyUsedSuccessfully(currentRoom: Room, newState: Room) : RoomEvent("Du låser upp och öppnar dörren.", currentRoom, newState)
 object KeyAlreadyUsed : Event("Du har redan låst upp dörren.")
 object NoUsageOfKey : Event("Du kan inte använda en nyckel här.")
 object NoKeyToBeUsed : Event("Du har väl ingen nyckel?")
 
-class SwitchedLightOnEvent(newRoom: Room): RoomEvent("Nu blev det ljust!", newRoom)
-class SwitchedLightOffEvent(currentRoom: Room): RoomEvent("Nu blev det mörkt igen!", currentRoom)
+class SwitchedLightOnEvent(currentRoom: Room, newState: Room): RoomEvent("Nu blev det ljust!", currentRoom, newState)
+class SwitchedLightOffEvent(currentRoom: Room, newState: Room): RoomEvent("Nu blev det mörkt igen!", currentRoom, newState)
 
-class HedgeSawnDownEvent:RoomEvent("Vroooooom! Du sågar ner häcken som värsta trädgårdsmästaren!", gardenWithSawnDownHedge)
+class HedgeSawnDownEvent:RoomEvent("Vroooooom! Du sågar ner häcken som värsta trädgårdsmästaren!", gardenCompound, gardenWithSawnDownHedge)
 
 
 val actionMap: Map<CommandType, (Input, Room, Room,  Items) -> Event> = mapOf(
-    GoCommand.GoEast to goActionFromRoomConnectionsMap(connectedRooms, "Du kan inte gå dit."),
-    GoCommand.GoWest to goActionFromRoomConnectionsMap(connectedRooms,"Du kan inte gå dit.!"),
-    GoCommand.GoNorth to goActionFromRoomConnectionsMap(connectedRooms,"Du kan inte gå dit."),
-    GoCommand.GoSouth to goActionFromRoomConnectionsMap(connectedRooms,"Du kan inte gå dit."),
+    GoCommand.GoEast to goActionFromRoomConnectionsMap(connectedRooms, roomStates, "Du kan inte gå dit."),
+    GoCommand.GoWest to goActionFromRoomConnectionsMap(connectedRooms, roomStates,"Du kan inte gå dit.!"),
+    GoCommand.GoNorth to goActionFromRoomConnectionsMap(connectedRooms, roomStates,"Du kan inte gå dit."),
+    GoCommand.GoSouth to goActionFromRoomConnectionsMap(connectedRooms, roomStates,"Du kan inte gå dit."),
     ActionCommand.UseKey to ::useKey,
     ActionCommand.GibberishInput to { _, _, _, _  -> Event("Hmmm, det där förstod jag inte!") },
     ActionCommand.EndGame to { _, _, _ , _ -> EndEvent ("Slutspelat!") },
@@ -215,15 +215,15 @@ val actionMap: Map<CommandType, (Input, Room, Room,  Items) -> Event> = mapOf(
     ActionCommand.ReadReceipt to ::readReceipt,
     ActionCommand.TakeKey to goActionForPickUpItem(UnusedKey, "Går inte att ta upp en sådan här!", "Du tar upp"),
     ActionCommand.DropKey to goActionForDropItem(UnusedKey, "Du har ingen sådan att släppa!", "Du släpper"),
-    ActionCommand.EnterHouse to goActionFromRoomConnectionsMap(connectedRooms, "Du kan inte gå dit."),
-    ActionCommand.ExitHouse to goActionFromRoomConnectionsMap(connectedRooms, "Du kan inte gå dit."),
+    ActionCommand.EnterHouse to goActionFromRoomConnectionsMap(connectedRooms, roomStates, "Du kan inte gå dit."),
+    ActionCommand.ExitHouse to goActionFromRoomConnectionsMap(connectedRooms, roomStates, "Du kan inte gå dit."),
     ActionCommand.SwitchOnLight to ::switchOnLight,
     ActionCommand.SwitchOffLight to ::switchOffLight,
     ActionCommand.TakeLamp to ::takeLamp,
     ActionCommand.TakeChainsaw to ::takeChainsawOrDie,
     ActionCommand.DropChainsaw to goActionForDropItem(Chainsaw, "Du har ingen sådan att släppa!", "Du släpper"),
     ActionCommand.SawDownHedge to ::sawDownHedge,
-    ActionCommand.LookAround to { _, currentRoom, _, _  -> SameRoomEvent("Du tittar dig omkring.", currentRoom)},
+    ActionCommand.LookAround to { _, currentRoom, currentState, _  -> SameRoomEvent("Du tittar dig omkring.", currentRoom, currentState)},
     ActionCommand.Inventory to goActionForInventory("Du bär inte på något.", "Du bär på"),
     ActionCommand.Dance to { _, _, _, _  -> Event("Dance, dance, dance!")},
     ActionCommand.Smash to {  _, _, _, _  -> Event("Så där gör man bara inte! Det kan räknas som skadegörelse och vara straffbart med böter eller fängelse enligt Brottbalken 12 kap. 1 §!")},
@@ -244,21 +244,21 @@ fun useKey(input: Input, currentRoom: Room, currentState: Room, items: Items): E
         return KeyAlreadyUsed
     }
     items.replaceCarried(currentKey, UsedKey)
-    return KeyUsedSuccessfully(inFrontOfOpenDoor)
+    return KeyUsedSuccessfully(currentRoom, inFrontOfOpenDoor)
 }
 
 fun switchOnLight(input: Input, currentRoom: Room, currentState: Room, items: Items): Event =
-    when(currentRoom){
-        insideLitRoom -> SameRoomEvent("Det är redan tänt, dumhuvve!", currentRoom)
-        insideDarkRoom -> SwitchedLightOnEvent(insideLitRoom)
-        else -> SameRoomEvent("Här? Hur då?", currentRoom)
+    when(currentState){
+        insideLitRoom -> SameRoomEvent("Det är redan tänt, dumhuvve!", currentRoom, currentState)
+        insideDarkRoom -> SwitchedLightOnEvent(currentRoom, insideLitRoom)
+        else -> SameRoomEvent("Här? Hur då?", currentRoom, currentState)
     }
 
 fun switchOffLight(input: Input, currentRoom: Room, currentState: Room, items: Items): Event =
     when(currentRoom){
-        insideDarkRoom -> SameRoomEvent("Den är redan släckt, men det kanske du inte ser eftersom det är så mörkt, haha!", currentRoom)
-        insideLitRoom -> SwitchedLightOffEvent(insideDarkRoom)
-        else -> SameRoomEvent("Här? Hur då?", currentRoom)
+        insideDarkRoom -> SameRoomEvent("Den är redan släckt, men det kanske du inte ser eftersom det är så mörkt, haha!", currentRoom, currentState)
+        insideLitRoom -> SwitchedLightOffEvent(currentRoom, insideDarkRoom)
+        else -> SameRoomEvent("Här? Hur då?", currentRoom, currentState)
     }
 
 fun takeChainsawOrDie(input: Input, currentRoom: Room, currentState: Room, items: Items): Event =
@@ -272,9 +272,9 @@ fun takeChainsawOrDie(input: Input, currentRoom: Room, currentState: Room, items
 fun sawDownHedge(input: Input, currentRoom: Room, currentState: Room, items: Items): Event =
     if(items.carriedItems().contains(Chainsaw)){
         when(currentRoom){
-            gardenWithSawnDownHedge -> SameRoomEvent("Nä, de kvarvarande häckarna går inte att såga ner av någon mystisk anledning", currentRoom)
+            gardenWithSawnDownHedge -> SameRoomEvent("Nä, de kvarvarande häckarna går inte att såga ner av någon mystisk anledning", currentRoom, currentState)
             garden -> HedgeSawnDownEvent()
-            else -> SameRoomEvent("Du sätter igång motorsågen och viftar med den i luften. Wrooom, wroom! Du känner inte för att såga i något av det du ser, så du stänger av den igen.", currentRoom)
+            else -> SameRoomEvent("Du sätter igång motorsågen och viftar med den i luften. Wrooom, wroom! Du känner inte för att såga i något av det du ser, så du stänger av den igen.", currentRoom, currentState)
         }
     }else{
         Event("Nu går du väl ändå händelserna i förväg? Du har ju inget att såga med!")
@@ -283,7 +283,7 @@ fun sawDownHedge(input: Input, currentRoom: Room, currentState: Room, items: Ite
 fun takeLamp(input: Input, currentRoom: Room, currentState: Room, items: Items): Event =
     when(currentRoom){
         insideLitRoom, insideDarkRoom -> Event("Du rycker och sliter, men lampan verkar fastsatt i golvet. Eller så är du bara väldigt svag!")
-        else -> SameRoomEvent("Var ser du en lampa att ta?", currentRoom)
+        else -> SameRoomEvent("Var ser du en lampa att ta?", currentRoom, currentState)
     }
 
 fun readReceipt(input: Input, currentRoom: Room, currentState: Room, items: Items): Event =
@@ -298,7 +298,7 @@ fun main() {
 
 
     val game = Game(connectedRooms, placementMap, actionMap, itemUsageRoomMap, eventLog,  startRoom, startState)
-    var event: Event = NewRoomEvent("Welcome!\n", startRoom)
+    var event: Event = NewRoomEvent("Welcome!\n", startRoom, startState)
     var currentRoom = startRoom
     var currentState = startState
     while (event !is EndEvent){

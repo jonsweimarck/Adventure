@@ -17,20 +17,38 @@ infix fun Guard.or(g2: Guard): Guard {
     return {input, room -> this.invoke(input, room) || g2(input, room)}
 }
 
-fun goActionFromRoomConnectionsMap(connectionsMap: RoomConnectionsMap, sameRoomEventText: String = "That didn't work!"): (Input, Room, Room, Items) -> Event
+fun goActionFromRoomConnectionsMap(connectionsMap: RoomConnectionsMap,
+                                   statesMap: Map<Room, List<Pair<Guard, Room>>>,
+                                   sameRoomEventText: String = "That didn't work!"): (Input, Room, Room, Items) -> Event
 {
     return fun(input, currentRoom, currentState, items): Event {
+        // find new room
         val roomConnections = connectionsMap.getOrElse(currentRoom) {
             // Should neeeeeever happen.The room has no connections!
-            return SameRoomEvent(sameRoomEventText , currentRoom)
+            return SameRoomEvent(sameRoomEventText , currentRoom, currentState)
         }
 
-        val index = roomConnections.indexOfFirst { it.first.invoke(input, currentRoom) }
-        if (index == -1) {
+        val roomIndex = roomConnections.indexOfFirst { it.first.invoke(input, currentRoom) }
+        if (roomIndex == -1) {
             // Trying to walk in an unconnected direction
-            return SameRoomEvent(sameRoomEventText , currentRoom)
+            return SameRoomEvent(sameRoomEventText , currentRoom, currentState)
         }
-        return NewRoomEvent("", roomConnections[index].second)
+        val newRoom = roomConnections[roomIndex].second
+
+        //find state within room
+        val roomStates = statesMap.getOrElse(newRoom) {
+            // Should neeeeeever happen.The room has no states!
+            return SameRoomEvent(sameRoomEventText , currentRoom, currentState)
+        }
+
+        val stateIndex = roomStates.indexOfFirst { it.first.invoke(input, currentRoom) }
+        if (stateIndex == -1) {
+            // No state matches!
+            return SameRoomEvent(sameRoomEventText , currentRoom, currentState)
+        }
+        val newState = roomStates[roomIndex].second
+
+        return NewRoomEvent("", newRoom, newState)
     }
 }
 
