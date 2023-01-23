@@ -34,12 +34,12 @@ fun goActionFromRoomConnectionsMap(connectionsMap: RoomConnectionsMap,
         }
         val newRoom = roomConnections[roomIndex].second
 
-        val stateIndex = currentRoom.states.indexOfFirst { it.first.invoke(input, currentRoom) }
+        val stateIndex = newRoom.states.indexOfFirst { it.first.invoke(input, currentRoom) }
         if (stateIndex == -1) {
             // No state matches!
             return SameRoomEvent(sameRoomEventText , currentRoom, currentState)
         }
-        val newState = currentRoom.states[stateIndex].second
+        val newState = newRoom.states[stateIndex].second
 
         return NewRoomEvent("", newRoom, newState)
     }

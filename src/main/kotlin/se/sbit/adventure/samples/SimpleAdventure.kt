@@ -22,7 +22,7 @@ private val inFrontOfOpenDoor = State(
 
 private val insideDarkRoom = State(
     """
-        |Du står i ett alldeles mörkt rum. Du kan ana en golvlampa vid din ena sida.
+        |Du står i ett alldeles mörkt rum. Du kan ana en golvlampa vid din ena sida, men allt är verkligen svårt att se.
         |Åt norr leder den öppna dörren ut ur huset.
     """.trimMargin())
 
@@ -65,31 +65,6 @@ private val endRoom = Room(listOf(
 val startRoom = gardenCompound
 val startState = garden
 
-//private val connectedRooms = mapOf(
-//    garden to listOf(
-//        Pair(south and ::doorIsClosed, inFrontOfClosedDoor),
-//        Pair(south and ::doorIsOpened, inFrontOfOpenDoor)),
-//    gardenWithSawnDownHedge to listOf(
-//        Pair(south and ::doorIsClosed, inFrontOfClosedDoor),
-//        Pair(south and ::doorIsOpened, inFrontOfOpenDoor),
-//        Pair(north, endRoom)),
-//    inFrontOfClosedDoor to listOf(Pair(north, garden)),
-//    inFrontOfOpenDoor to listOf(
-//        Pair(north and ::hedgeIsNotSawnDown, garden),
-//        Pair(north and ::hedgeIsSawnDown, gardenWithSawnDownHedge),
-//        Pair(south  and ::lightIsOff, insideDarkRoom),
-//        Pair(south  and ::lightIsOn, insideLitRoom),
-//        Pair(::enterRoom and ::lightIsOff, insideDarkRoom),
-//        Pair(::enterRoom and ::lightIsOn, insideLitRoom)),
-//    insideDarkRoom to listOf(
-//        Pair(north or ::exitRoom, inFrontOfOpenDoor),
-//        Pair(::lightIsOn, insideLitRoom)),
-//    insideLitRoom to listOf(
-//        Pair(::lightIsOff, insideDarkRoom),
-//        Pair(north or ::exitRoom, inFrontOfOpenDoor)),
-//)
-
-
 
 private val connectedRooms = mapOf(
     gardenCompound to listOf(
@@ -97,23 +72,12 @@ private val connectedRooms = mapOf(
         Pair(north and ::hedgeIsSawnDown, endRoom)),
     inFrontOfDooor to listOf(
         Pair(north, gardenCompound),
+        Pair(::enterRoom and ::doorIsOpened, inside),
         Pair(south and ::doorIsOpened, inside)),
     inside to listOf(
+        Pair(::exitRoom, inFrontOfDooor),
         Pair(north, inFrontOfDooor)),
 )
-//
-//
-//private val roomStates = mapOf(
-//    gardenCompound to listOf(
-//        Pair(::hedgeIsNotSawnDown, garden),
-//        Pair(::hedgeIsSawnDown, gardenWithSawnDownHedge)),
-//    inFrontOfDooor to listOf(
-//        Pair(::doorIsClosed, inFrontOfClosedDoor),
-//        Pair(::doorIsOpened, inFrontOfOpenDoor)),
-//    inside to listOf(
-//        Pair(::lightIsOff, insideDarkRoom),
-//        Pair(::lightIsOn, insideLitRoom)),
-//)
 
 
 
@@ -273,7 +237,7 @@ fun switchOffLight(input: Input, currentRoom: Room, currentState: State, items: 
 fun takeChainsawOrDie(input: Input, currentRoom: Room, currentState: State, items: Items): Event =
     if (currentState == insideDarkRoom && items.itemsIn(inside).contains(Chainsaw))
     {
-        EndEvent("Du ser inte vad du gör! I mörkret råkar du sätta på den! Oj! Hoppsan! Aj! \nDu blev till en hög av blod!")
+        EndEvent("Du ser inte vad du gör i mörkret! Hoppsan, du råkar sätta på den! Oj! Aj! \nDu blev till en hög av blod!")
     } else {
         goActionForPickUpItem(Chainsaw, "Går inte att ta upp en sådan här!", "Du tar upp").invoke(input, currentRoom, currentState, items)
     }
@@ -281,7 +245,7 @@ fun takeChainsawOrDie(input: Input, currentRoom: Room, currentState: State, item
 fun sawDownHedge(input: Input, currentRoom: Room, currentState: State, items: Items): Event =
     if(items.carriedItems().contains(Chainsaw)){
         when(currentState){
-            gardenWithSawnDownHedge -> SameRoomEvent("Nä, de kvarvarande häckarna går inte att såga ner av någon mystisk anledning", currentRoom, currentState)
+            gardenWithSawnDownHedge -> SameRoomEvent("De kvarvarande häckarna går inte att såga ner av någon mystisk anledning.", currentRoom, currentState)
             garden -> HedgeSawnDownEvent()
             else -> SameRoomEvent("Du sätter igång motorsågen och viftar med den i luften. Wrooom, wroom! Du känner inte för att såga i något av det du ser, så du stänger av den igen.", currentRoom, currentState)
         }
@@ -324,6 +288,7 @@ fun main() {
         eventLog.add(event)
         if(event is RoomEvent) {
             currentRoom = event.newRoom
+            currentState = event.newState
         }
     }
 
