@@ -3,7 +3,7 @@ package se.sbit.adventure.samples
 import se.sbit.adventure.engine.*
 
 
-private val garden = State(
+private val gardenWithHedge = State(
     """
         |Du står på en gräsmatta i en villaträdgård. 
         |Trädgården har höga häckar åt tre väderstreck, och åt söder ligger villan.
@@ -20,13 +20,13 @@ private val inFrontOfOpenDoor = State(
         |En öppen dörr leder in i huset.
     """.trimMargin())
 
-private val insideDarkRoom = State(
+private val darkRoom = State(
     """
         |Du står i ett alldeles mörkt rum. Du kan ana en golvlampa vid din ena sida, men allt är verkligen svårt att se.
         |Åt norr leder den öppna dörren ut ur huset.
     """.trimMargin())
 
-private val insideLitRoom = State(
+private val litRoom = State(
     """
         |Du står i ett rum endast upplyst av en golvlampa.
         |Åt norr leder den öppna dörren ut ur huset.
@@ -47,8 +47,8 @@ private val endState = State(
     """.trimMargin())
 
 
-private val gardenCompound = Room(listOf(
-    Pair(::hedgeIsNotSawnDown, garden),
+private val garden = Room(listOf(
+    Pair(::hedgeIsNotSawnDown, gardenWithHedge),
     Pair(::hedgeIsSawnDown, gardenWithSawnDownHedge)))
 
 private val inFrontOfDooor = Room(listOf(
@@ -56,22 +56,22 @@ private val inFrontOfDooor = Room(listOf(
     Pair(::doorIsOpened, inFrontOfOpenDoor)))
 
 private val inside = Room(listOf(
-    Pair(::lightIsOff, insideDarkRoom),
-    Pair(::lightIsOn, insideLitRoom)))
+    Pair(::lightIsOff, darkRoom),
+    Pair(::lightIsOn, litRoom)))
 
 private val endRoom = Room(listOf(
     Pair(::hedgeIsSawnDown, endState)))  // <- No need for a guard actually
 
-val startRoom = gardenCompound
-val startState = garden
+val startRoom = garden
+val startState = gardenWithHedge
 
 
 private val connectedRooms = mapOf(
-    gardenCompound to listOf(
+    garden to listOf(
         Pair(south, inFrontOfDooor),
         Pair(north and ::hedgeIsSawnDown, endRoom)),
     inFrontOfDooor to listOf(
-        Pair(north, gardenCompound),
+        Pair(north, garden),
         Pair(::enterRoom and ::doorIsOpened, inside),
         Pair(south and ::doorIsOpened, inside)),
     inside to listOf(
@@ -104,7 +104,7 @@ object UsedKey: Key("en nyckel")
 object Chainsaw: MiscItems("en motorsåg")
 
 private var placementMap: Map<ItemType, Placement> = mapOf(
-    UnusedKey to InRoom(gardenCompound),
+    UnusedKey to InRoom(garden),
     Receipt to Carried,
     Chainsaw to InRoom(inside),
 )
@@ -149,12 +149,12 @@ val stringinput2Command: Map<String, CommandType> = mapOf (
     "(öppna dörr(en)?|använd nyckel(n)?|lås upp( dörren?)?)" to ActionCommand.UseKey,
     "(gå in.*|gå till villan)" to ActionCommand.EnterHouse,
     "gå ut.*" to ActionCommand.ExitHouse,
-    "tänd lampa(n)?" to ActionCommand.SwitchOnLight,
-    "släck lampa(n)?" to ActionCommand.SwitchOffLight,
+    "tänd (lampa(n)?|ljuset)" to ActionCommand.SwitchOnLight,
+    "släck (lampa(n)?|ljuset)" to ActionCommand.SwitchOffLight,
     "(ta |plocka )(upp )?(golv)?lampa(n)?" to ActionCommand.TakeLamp,
     "(ta |plocka )(upp )?motorsåg(en)?" to ActionCommand.TakeChainsaw,
     "släpp motorsåg(en)?" to ActionCommand.DropChainsaw,
-    "(såga (ner )?häck(en)?|använd motorsåg(en)?)" to ActionCommand.SawDownHedge,
+    "(såga (ner )?häck(en)?|(använd |starta )motorsåg(en)?)" to ActionCommand.SawDownHedge,
     "titta( omkring| runt)?" to ActionCommand.LookAround,
     "i(nventory)?" to ActionCommand.Inventory,
     "dansa" to ActionCommand.Dance,
@@ -172,7 +172,7 @@ object NoKeyToBeUsed : Event("Du har väl ingen nyckel?")
 class SwitchedLightOnEvent(currentRoom: Room, newState: State): RoomEvent("Nu blev det ljust!", currentRoom, newState)
 class SwitchedLightOffEvent(currentRoom: Room, newState: State): RoomEvent("Nu blev det mörkt igen!", currentRoom, newState)
 
-class HedgeSawnDownEvent:RoomEvent("Vroooooom! Du sågar ner häcken som värsta trädgårdsmästaren!", gardenCompound, gardenWithSawnDownHedge)
+class HedgeSawnDownEvent:RoomEvent("Vroooooom! Du sågar ner häcken som värsta trädgårdsmästaren!", garden, gardenWithSawnDownHedge)
 
 
 val actionMap: Map<CommandType, (Input, Room, State,  Items) -> Event> = mapOf(
@@ -186,8 +186,8 @@ val actionMap: Map<CommandType, (Input, Room, State,  Items) -> Event> = mapOf(
     ActionCommand.TakeReceipt to goActionForPickUpItem(Receipt, "Går inte att ta upp en sådan här!", "Du tar upp"),
     ActionCommand.DropReceipt to goActionForDropItem(Receipt, "Du har ingen sådan att släppa!", "Du släpper"),
     ActionCommand.ReadReceipt to ::readReceipt,
-    ActionCommand.TakeKey to goActionForPickUpItem(UnusedKey, "Går inte att ta upp en sådan här!", "Du tar upp"),
-    ActionCommand.DropKey to goActionForDropItem(UnusedKey, "Du har ingen sådan att släppa!", "Du släpper"),
+    ActionCommand.TakeKey to ::takeAnyKey,
+    ActionCommand.DropKey to ::dropAnyKey,
     ActionCommand.EnterHouse to goActionFromRoomConnectionsMap(connectedRooms, "Du kan inte gå dit."),
     ActionCommand.ExitHouse to goActionFromRoomConnectionsMap(connectedRooms, "Du kan inte gå dit."),
     ActionCommand.SwitchOnLight to ::switchOnLight,
@@ -220,22 +220,41 @@ fun useKey(input: Input, currentRoom: Room, currentState: State, items: Items): 
     return KeyUsedSuccessfully(currentRoom, inFrontOfOpenDoor)
 }
 
+fun takeAnyKey(input: Input, currentRoom: Room, currentState: State, items: Items): Event =
+    if (items.itemsIn(currentRoom).filterIsInstance<Key>().isEmpty()) {
+        NoSuchItemHereEvent("Går inte att ta upp en sådan här!")
+    } else {
+        val key = items.itemsIn(currentRoom).filterIsInstance<Key>().first()
+        items.pickUp(key, currentRoom)
+        PickedUpItemEvent("Du tar upp en nyckel")
+    }
+
+fun dropAnyKey(input: Input, currentRoom: Room, currentState: State, items: Items): Event =
+    if (items.carriedItems().filterIsInstance<Key>().isEmpty()) {
+        NoSuchItemToDropItemEvent("Du har ingen sådan att släppa!")
+    } else {
+        val key = items.carriedItems().filterIsInstance<Key>().first()
+        items.drop(key, currentRoom)
+        DroppedItemEvent("Du släpper en nyckel")
+    }
+
+
 fun switchOnLight(input: Input, currentRoom: Room, currentState: State, items: Items): Event =
     when(currentState){
-        insideLitRoom -> SameRoomEvent("Det är redan tänt, dumhuvve!", currentRoom, currentState)
-        insideDarkRoom -> SwitchedLightOnEvent(currentRoom, insideLitRoom)
+        litRoom -> SameRoomEvent("Det är redan tänt, dumhuvve!", currentRoom, currentState)
+        darkRoom -> SwitchedLightOnEvent(currentRoom, litRoom)
         else -> SameRoomEvent("Här? Hur då?", currentRoom, currentState)
     }
 
 fun switchOffLight(input: Input, currentRoom: Room, currentState: State, items: Items): Event =
     when(currentState){
-        insideDarkRoom -> SameRoomEvent("Den är redan släckt, men det kanske du inte ser eftersom det är så mörkt, haha!", currentRoom, currentState)
-        insideLitRoom -> SwitchedLightOffEvent(currentRoom, insideDarkRoom)
+        darkRoom -> SameRoomEvent("Den är redan släckt, men det kanske du inte ser eftersom det är så mörkt, haha!", currentRoom, currentState)
+        litRoom -> SwitchedLightOffEvent(currentRoom, darkRoom)
         else -> SameRoomEvent("Här? Hur då?", currentRoom, currentState)
     }
 
 fun takeChainsawOrDie(input: Input, currentRoom: Room, currentState: State, items: Items): Event =
-    if (currentState == insideDarkRoom && items.itemsIn(inside).contains(Chainsaw))
+    if (currentState == darkRoom && items.itemsIn(inside).contains(Chainsaw))
     {
         EndEvent("Du ser inte vad du gör i mörkret! Hoppsan, du råkar sätta på den! Oj! Aj! \nDu blev till en hög av blod!")
     } else {
@@ -246,7 +265,7 @@ fun sawDownHedge(input: Input, currentRoom: Room, currentState: State, items: It
     if(items.carriedItems().contains(Chainsaw)){
         when(currentState){
             gardenWithSawnDownHedge -> SameRoomEvent("De kvarvarande häckarna går inte att såga ner av någon mystisk anledning.", currentRoom, currentState)
-            garden -> HedgeSawnDownEvent()
+            gardenWithHedge -> HedgeSawnDownEvent()
             else -> SameRoomEvent("Du sätter igång motorsågen och viftar med den i luften. Wrooom, wroom! Du känner inte för att såga i något av det du ser, så du stänger av den igen.", currentRoom, currentState)
         }
     }else{
@@ -255,14 +274,14 @@ fun sawDownHedge(input: Input, currentRoom: Room, currentState: State, items: It
 
 fun takeLamp(input: Input, currentRoom: Room, currentState: State, items: Items): Event =
     when(currentState){
-        insideLitRoom, insideDarkRoom -> Event("Du rycker och sliter, men lampan verkar fastsatt i golvet. Eller så är du bara väldigt svag!")
+        litRoom, darkRoom -> Event("Du rycker och sliter, men lampan verkar fastsatt i golvet. Eller så är du bara väldigt svag!")
         else -> SameRoomEvent("Var ser du en lampa att ta?", currentRoom, currentState)
     }
 
 fun readReceipt(input: Input, currentRoom: Room, currentState: State, items: Items): Event =
         when(items.carriedItems().contains(Receipt)){
             true -> Event("Oh! Du har tydligen handlat mjölk, ost, yoghurt och skivbar leverpastej för några veckor sedan.")
-            false -> Event("Det går inte, för du har lagt det nånstans.")
+            false -> Event("Då får du först plocka upp det igen!")
         }
 
 
