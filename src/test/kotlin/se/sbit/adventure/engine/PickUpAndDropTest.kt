@@ -14,8 +14,13 @@ import strikt.assertions.*
 @DisplayName("Given a world with items in rooms, the player:")
 class PickUpAndDropTest {
 
-    private val roomA = Room("a")
-    private val roomB = Room("b")
+    // Setting up two rooms, connected North-South
+    // Each room has just a single state
+    private val alwaysPass = { _: Input, _: Room -> true}
+    private val stateA = State("a")
+    private val stateB = State("b")
+    private val roomA = Room(listOf(Pair(alwaysPass, stateA)))
+    private val roomB = Room(listOf(Pair(alwaysPass, stateB)))
 
     private val connectedRooms = mapOf(
         roomA to listOf(Pair(south, roomB)),
@@ -37,7 +42,8 @@ class PickUpAndDropTest {
     @Test
     fun `can carry item from start`() {
         val currentRoom = roomA
-        val game = Game(connectedRooms, itemMap, startRoom = currentRoom, startState = currentRoom)
+        val currentState = stateA
+        val game = Game(connectedRooms, itemMap, startRoom = currentRoom, startState = currentState)
 
         expectThat(game.allItems.carriedItems()).containsExactly(Bottle)
     }
@@ -45,7 +51,8 @@ class PickUpAndDropTest {
     @Test
     fun `can pick up item in current room`() {
         val currentRoom = roomA
-        val game = Game(connectedRooms, itemMap, startRoom = currentRoom, startState = currentRoom)
+        val currentState = stateA
+        val game = Game(connectedRooms, itemMap, startRoom = currentRoom, startState = currentState)
 
         expectThat(game.allItems.carriedItems()).containsExactly(Bottle)
         game.allItems.pickUp(Sword, currentRoom)
@@ -56,7 +63,8 @@ class PickUpAndDropTest {
     @Test
     fun `cannot pick up item from another room`() {
         val currentRoom = roomA
-        val game = Game(connectedRooms, itemMap, startRoom = currentRoom, startState = currentRoom)
+        val currentState = stateA
+        val game = Game(connectedRooms, itemMap, startRoom = currentRoom, startState = currentState)
 
         expectCatching {game.allItems.pickUp(Key, roomA)}.isFailure()
     }
@@ -64,7 +72,8 @@ class PickUpAndDropTest {
     @Test
     fun `cannot pick up item already carried`() {
         val currentRoom = roomA
-        val game = Game(connectedRooms, itemMap, startRoom = currentRoom, startState = currentRoom)
+        val currentState = stateA
+        val game = Game(connectedRooms, itemMap, startRoom = currentRoom, startState = currentState)
 
         expectCatching {game.allItems.pickUp(Bottle, roomA)}.isFailure()
     }
@@ -72,7 +81,8 @@ class PickUpAndDropTest {
     @Test
     fun `can drop carried item`() {
         val currentRoom = roomA
-        val game = Game(connectedRooms, itemMap, startRoom = currentRoom, startState = currentRoom)
+        val currentState = stateA
+        val game = Game(connectedRooms, itemMap, startRoom = currentRoom, startState = currentState)
 
         expectThat(game.allItems.carriedItems()).containsExactly(Bottle)
         game.allItems.drop(Bottle, roomA)
@@ -82,7 +92,8 @@ class PickUpAndDropTest {
     @Test
     fun `cannot drop item not carried`() {
         val currentRoom = roomA
-        val game = Game(connectedRooms, itemMap, startRoom = currentRoom, startState = currentRoom)
+        val currentState = stateA
+        val game = Game(connectedRooms, itemMap, startRoom = currentRoom, startState = currentState)
 
         expectCatching {game.allItems.drop(Key, roomA)}.isFailure()
     }

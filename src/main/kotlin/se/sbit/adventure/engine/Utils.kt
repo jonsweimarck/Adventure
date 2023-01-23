@@ -18,8 +18,7 @@ infix fun Guard.or(g2: Guard): Guard {
 }
 
 fun goActionFromRoomConnectionsMap(connectionsMap: RoomConnectionsMap,
-                                   statesMap: Map<Room, List<Pair<Guard, Room>>>,
-                                   sameRoomEventText: String = "That didn't work!"): (Input, Room, Room, Items) -> Event
+                                   sameRoomEventText: String = "That didn't work!"): (Input, Room, State, Items) -> Event
 {
     return fun(input, currentRoom, currentState, items): Event {
         // find new room
@@ -35,18 +34,12 @@ fun goActionFromRoomConnectionsMap(connectionsMap: RoomConnectionsMap,
         }
         val newRoom = roomConnections[roomIndex].second
 
-        //find state within room
-        val roomStates = statesMap.getOrElse(newRoom) {
-            // Should neeeeeever happen.The room has no states!
-            return SameRoomEvent(sameRoomEventText , currentRoom, currentState)
-        }
-
-        val stateIndex = roomStates.indexOfFirst { it.first.invoke(input, currentRoom) }
+        val stateIndex = currentRoom.states.indexOfFirst { it.first.invoke(input, currentRoom) }
         if (stateIndex == -1) {
             // No state matches!
             return SameRoomEvent(sameRoomEventText , currentRoom, currentState)
         }
-        val newState = roomStates[stateIndex].second
+        val newState = currentRoom.states[stateIndex].second
 
         return NewRoomEvent("", newRoom, newState)
     }
