@@ -109,9 +109,6 @@ private var placementMap: Map<ItemType, Placement> = mapOf(
     Chainsaw to InRoom(inside),
 )
 
-val itemUsageRoomMap: Map<ItemType, Room> = mapOf(          // Todo borde tas bort, sköts i action-funktionerna
-    UnusedKey to inFrontOfDooor,)
-
 // Possible user input
 enum class ActionCommand: CommandType {
     TakeReceipt,
@@ -207,14 +204,12 @@ fun useKey(input: Input, currentRoom: Room, currentState: State, items: Items): 
     if(items.carriedItems().filterIsInstance<Key>().isEmpty()){
         return NoKeyToBeUsed;
     }
-
-    if(items.usableItemsInRoom(currentRoom).filterIsInstance<Key>().isEmpty()){
-        return NoUsageOfKey;
-    }
     val currentKey = items.carriedItems().filterIsInstance<Key>().first()
-
     if(currentKey is UsedKey) {
         return KeyAlreadyUsed
+    }
+    if(currentState != inFrontOfClosedDoor){
+        return NoUsageOfKey;
     }
     items.replaceCarried(currentKey, UsedKey)
     return KeyUsedSuccessfully(currentRoom, inFrontOfOpenDoor)
@@ -289,7 +284,7 @@ fun main() {
     println("**************  Simple Adventure ****************")
 
 
-    val game = Game(connectedRooms, placementMap, actionMap, itemUsageRoomMap, eventLog,  startRoom, startState)
+    val game = Game(connectedRooms, placementMap, actionMap, eventLog,  startRoom, startState)
     var event: Event = NewRoomEvent("Welcome!\n", startRoom, startState)
     var currentRoom = startRoom
     var currentState = startState

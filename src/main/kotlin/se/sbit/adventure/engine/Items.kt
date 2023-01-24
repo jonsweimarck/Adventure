@@ -51,7 +51,7 @@ fun goActionForInventory(notCarryingAnythingEventText: String = "You don't carry
     }
 }
 
-class Items(initialItemMap: ItemsPlacementMap, val itemUsageRoomMap: Map<ItemType, Room>) {
+class Items(initialItemMap: ItemsPlacementMap) {
 
     private val itemMap: MutableMap<ItemType, Placement> = initialItemMap.toMutableMap()
 
@@ -63,7 +63,6 @@ class Items(initialItemMap: ItemsPlacementMap, val itemUsageRoomMap: Map<ItemTyp
         .filter{(it.value as InRoom).room == room}
         .map{it.key}
 
-    fun usableItemsInRoom(room: Room): List<ItemType> = itemUsageRoomMap.entries.filter { it.value==room }.map { it.key }
 
     fun pickUp(item: ItemType, currentRoom: Room): ItemType {
         // Sanity checks

@@ -25,13 +25,12 @@ typealias RoomConnectionsMap =  Map<Room, List<Pair<Guard, Room>>>
 class Game(val connections: RoomConnectionsMap,
            itemsPlacementMap: ItemsPlacementMap = emptyMap(),
            val actionMap: Map<CommandType, (Input, Room, State, Items) -> Event> = emptyMap(),
-           itemUsageRoomMap: Map<ItemType, Room> = emptyMap(),
            val eventlog: EventLog = EventLog(),
            val startRoom: Room,
            val startState:State
 ){
 
-    val allItems: Items = Items(itemsPlacementMap, itemUsageRoomMap)
+    val allItems: Items = Items(itemsPlacementMap)
 
 
     fun playerDo(input: Input, currentRoom: Room, currentState: State): Event {
