@@ -28,7 +28,7 @@ class ActionsTest {
     )
 
 
-    // All Items, as well as where they are placed, and in what rooms they can be used
+    // All Items, as well as where they are placed
     sealed class MiscItems(override val description: String): ItemType
     object Sword: MiscItems("ett svärd")
     object Bottle: MiscItems("en flaska")

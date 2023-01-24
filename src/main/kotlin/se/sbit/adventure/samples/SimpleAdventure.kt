@@ -117,6 +117,7 @@ enum class ActionCommand: CommandType {
     TakeKey,
     DropKey,
     UseKey,
+    LookIn,
     EnterHouse,
     ExitHouse,
     SwitchOnLight,
@@ -143,18 +144,19 @@ val stringinput2Command: Map<String, CommandType> = mapOf (
     "(Läs |Undersök |titta (på )?)kvitto(t)?" to ActionCommand.ReadReceipt,
     "(ta |plocka )(upp )?nyckel(n)?" to ActionCommand.TakeKey,
     "släpp nyckel(n)?" to ActionCommand.DropKey,
-    "(öppna dörr(en)?|använd nyckel(n)?|lås upp( dörren?)?)" to ActionCommand.UseKey,
-    "(gå in.*|gå till villan)" to ActionCommand.EnterHouse,
+    "(öppna|öppna dörr(en)?|använd nyckel(n)?|lås upp( dörren?)?)" to ActionCommand.UseKey,
+    "titta in( .*)?" to ActionCommand.LookIn,
+    "(gå in( .*)?|gå till villan)" to ActionCommand.EnterHouse,
     "gå ut.*" to ActionCommand.ExitHouse,
-    "tänd (lampa(n)?|ljuset)" to ActionCommand.SwitchOnLight,
-    "släck (lampa(n)?|ljuset)" to ActionCommand.SwitchOffLight,
+    "(tänd|tänd ((golv)?lampa(n)?|ljuset))" to ActionCommand.SwitchOnLight,
+    "(släck|släck ((golv)?lampa(n)?|ljuset))" to ActionCommand.SwitchOffLight,
     "(ta |plocka )(upp )?(golv)?lampa(n)?" to ActionCommand.TakeLamp,
     "(ta |plocka )(upp )?motorsåg(en)?" to ActionCommand.TakeChainsaw,
     "släpp motorsåg(en)?" to ActionCommand.DropChainsaw,
-    "(såga (ner )?häck(en)?|(använd |starta )motorsåg(en)?)" to ActionCommand.SawDownHedge,
-    "titta( omkring| runt)?" to ActionCommand.LookAround,
+    "(såga (ner )?häck(en)?|(använd |sätt på |starta )motorsåg(en)?).*" to ActionCommand.SawDownHedge,
+    "titta( omkring.*| runt.*)?" to ActionCommand.LookAround,
     "i(nventory)?" to ActionCommand.Inventory,
-    "dansa" to ActionCommand.Dance,
+    "dansa.*" to ActionCommand.Dance,
     "(krossa |slå sönder |mosa ).*" to ActionCommand.Smash,
 )
 
@@ -185,6 +187,7 @@ val actionMap: Map<CommandType, (Input, Room, State,  Items) -> Event> = mapOf(
     ActionCommand.ReadReceipt to ::readReceipt,
     ActionCommand.TakeKey to ::takeAnyKey,
     ActionCommand.DropKey to ::dropAnyKey,
+    ActionCommand.LookIn to ::lookIn,
     ActionCommand.EnterHouse to goActionFromRoomConnectionsMap(connectedRooms, "Du kan inte gå dit."),
     ActionCommand.ExitHouse to goActionFromRoomConnectionsMap(connectedRooms, "Du kan inte gå dit."),
     ActionCommand.SwitchOnLight to ::switchOnLight,
@@ -231,6 +234,17 @@ fun dropAnyKey(input: Input, currentRoom: Room, currentState: State, items: Item
         val key = items.carriedItems().filterIsInstance<Key>().first()
         items.drop(key, currentRoom)
         DroppedItemEvent("Du släpper en nyckel")
+    }
+
+fun lookIn(input: Input, currentRoom: Room, currentState: State, items: Items): Event =
+    when(currentState){
+        inFrontOfOpenDoor  -> if (lightIsOn(input,  currentRoom)) {
+            SameRoomEvent("Du ser knappt något eftersom det enda ljuset kommer från en liten golvlampa.", currentRoom, currentState)
+        } else {
+            SameRoomEvent("Det ser helt mörkt ut där inne.", currentRoom, currentState)
+        }
+        inFrontOfClosedDoor -> SameRoomEvent("Duh! Det är en stängd dörr i vägen!", currentRoom, currentState)
+        else -> SameRoomEvent("Här? Hur då?", currentRoom, currentState)
     }
 
 
