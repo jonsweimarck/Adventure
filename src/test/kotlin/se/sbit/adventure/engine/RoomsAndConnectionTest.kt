@@ -11,19 +11,23 @@ import strikt.assertions.isEqualTo
  * Note: To see the test names when running in IDE and not only in Gradle HTML report,
  * go to IntelliJ settings -> Build, Execution, Deployment -> Build Tools -> Gradle and under "Run tests using" select "IntelliJ IDEA"
  */
-@DisplayName("Given a world with rooms and connections, the player:")
+@DisplayName("Given a world with rooms, states and connections, the player:")
 class RoomsAndConnectionTest {
 
     val alwaysPass = { _: Input, _: Room -> true}
+    val alwaysStop = { _: Input, _: Room -> false}
 
     val stateA = State("a")
     val stateB = State("b")
     val stateC = State("c")
-    val stateD = State("d")
+    val stateD1 = State("d1")
+    val stateD2 = State("d2")
     val roomA = Room(listOf(Pair(alwaysPass, stateA)))
     val roomB = Room(listOf(Pair(alwaysPass, stateB)))
     val roomC = Room(listOf(Pair(alwaysPass, stateC)))
-    val roomD = Room(listOf(Pair(alwaysPass, stateD)))
+    val roomD = Room(listOf(
+        Pair(alwaysStop, stateD1),      // <- If in RoomD, never end up in room state D1
+        Pair(alwaysPass, stateD2)))     // <- If in RoomD, always end up in room state D2
 
     val connectionsMap = mapOf (
         roomA to listOf(
@@ -65,6 +69,17 @@ class RoomsAndConnectionTest {
         val goWestEvent = game.playerDo(Input(GoCommand.GoWest), roomA, stateA)
         expectThat(goWestEvent).isA<NewRoomEvent>()
         expectThat((goWestEvent as NewRoomEvent).newRoom).isEqualTo(roomC)
+    }
+
+    @Test
+    fun `will end up in the first matching state in a room`() {
+        val game = Game(connectionsMap, actionMap = actionMap, startRoom = roomB, startState = stateB)
+
+        val goNorthEvent = game.playerDo(Input(GoCommand.GoNorth), roomB, stateB)
+        expectThat(goNorthEvent).isA<NewRoomEvent>()
+        expectThat((goNorthEvent as NewRoomEvent).newRoom ).isEqualTo(roomD)
+        expectThat((goNorthEvent).newState ).isEqualTo(stateD2) // <- End up in D2, not D1
+
     }
 
 
