@@ -17,8 +17,8 @@ infix fun Guard.or(g2: Guard): Guard {
     return {input, room -> this.invoke(input, room) || g2(input, room)}
 }
 
-fun goActionFromRoomConnectionsMap(connectionsMap: RoomConnectionsMap,
-                                   sameRoomEventText: String = "That didn't work!"): (Input, Room, State, Items) -> Event
+fun actionForGo(connectionsMap: RoomConnectionsMap,
+                sameRoomEventText: String = "That didn't work!"): (Input, Room, State, Items) -> Event
 {
     return fun(input, currentRoom, currentState, items): Event {
         // find new room

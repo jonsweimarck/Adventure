@@ -111,9 +111,11 @@ private var placementMap: Map<ItemType, Placement> = mapOf(
 
 // Possible user input
 enum class ActionCommand: CommandType {
+    ExamineReceipt,
+    ExamineKey,
+    ExamineChainsaw,
     TakeReceipt,
     DropReceipt,
-    ReadReceipt,
     TakeKey,
     DropKey,
     UseKey,
@@ -139,9 +141,11 @@ val stringinput2Command: Map<String, CommandType> = mapOf (
     "((gå (åt )?)?s(öder)?|gå söderut)" to GoCommand.GoSouth,
     "((gå (åt )?)?n(orr)?|gå söderut)" to GoCommand.GoNorth,
     "(exit( game)?|(av)?sluta|bye|hej( då|då))" to ActionCommand.EndGame,
+    "(Läs |Undersök |titta (på )?)kvitto(t)?" to ActionCommand.ExamineReceipt,
+    "(Undersök |titta (på )?)nyckel(n)?" to ActionCommand.ExamineKey,
+    "(Undersök |titta (på )?)motorsåg(en)?" to ActionCommand.ExamineChainsaw,
     "(ta |plocka )(upp )?kvitto(t)?" to ActionCommand.TakeReceipt,
     "släpp kvitto(t)?" to ActionCommand.DropReceipt,
-    "(Läs |Undersök |titta (på )?)kvitto(t)?" to ActionCommand.ReadReceipt,
     "(ta |plocka )(upp )?nyckel(n)?" to ActionCommand.TakeKey,
     "släpp nyckel(n)?" to ActionCommand.DropKey,
     "(öppna|öppna dörr(en)?|använd nyckel(n)?|lås upp( dörren?)?)" to ActionCommand.UseKey,
@@ -175,26 +179,30 @@ class HedgeSawnDownEvent:RoomEvent("Vroooooom! Du sågar ner häcken som värsta
 
 
 val actionMap: Map<CommandType, (Input, Room, State,  Items) -> Event> = mapOf(
-    GoCommand.GoEast to goActionFromRoomConnectionsMap(connectedRooms, "Du kan inte gå dit."),
-    GoCommand.GoWest to goActionFromRoomConnectionsMap(connectedRooms,"Du kan inte gå dit.!"),
-    GoCommand.GoNorth to goActionFromRoomConnectionsMap(connectedRooms,"Du kan inte gå dit."),
-    GoCommand.GoSouth to goActionFromRoomConnectionsMap(connectedRooms,"Du kan inte gå dit."),
+    GoCommand.GoEast to actionForGo(connectedRooms, "Du kan inte gå dit."),
+    GoCommand.GoWest to actionForGo(connectedRooms,"Du kan inte gå dit.!"),
+    GoCommand.GoNorth to actionForGo(connectedRooms,"Du kan inte gå dit."),
+    GoCommand.GoSouth to actionForGo(connectedRooms,"Du kan inte gå dit."),
+
+    ActionCommand.ExamineReceipt to actionForExamineItem(Receipt, "Oh! Du har tydligen handlat mjölk, ost, yoghurt och skivbar leverpastej för några veckor sedan.", "Då får du först plocka upp det igen!"),
+    ActionCommand.ExamineKey to ::examineKey,
+    ActionCommand.ExamineChainsaw to actionForExamineItem(Chainsaw, "Wow! En 13 tums Husqvarna 550 XPG Mark II! Orangeröd! ", "Då får du först plocka upp den igen!"),
+
     ActionCommand.UseKey to ::useKey,
     ActionCommand.GibberishInput to { _, _, _, _  -> Event("Hmmm, det där förstod jag inte!") },
     ActionCommand.EndGame to { _, _, _ , _ -> EndEvent ("Slutspelat!\nSlut för idag, tack för idag!") },
-    ActionCommand.TakeReceipt to goActionForPickUpItem(Receipt, "Går inte att ta upp en sådan här!", "Du tar upp"),
-    ActionCommand.DropReceipt to goActionForDropItem(Receipt, "Du har ingen sådan att släppa!", "Du släpper"),
-    ActionCommand.ReadReceipt to ::readReceipt,
+    ActionCommand.TakeReceipt to actionForPickUpItem(Receipt, "Går inte att ta upp en sådan här!", "Du tar upp"),
+    ActionCommand.DropReceipt to actionForDropItem(Receipt, "Du har ingen sådan att släppa!", "Du släpper"),
     ActionCommand.TakeKey to ::takeAnyKey,
     ActionCommand.DropKey to ::dropAnyKey,
     ActionCommand.LookIn to ::lookIn,
-    ActionCommand.EnterHouse to goActionFromRoomConnectionsMap(connectedRooms, "Du kan inte gå dit."),
-    ActionCommand.ExitHouse to goActionFromRoomConnectionsMap(connectedRooms, "Du kan inte gå dit."),
+    ActionCommand.EnterHouse to actionForGo(connectedRooms, "Du kan inte gå dit."),
+    ActionCommand.ExitHouse to actionForGo(connectedRooms, "Du kan inte gå dit."),
     ActionCommand.SwitchOnLight to ::switchOnLight,
     ActionCommand.SwitchOffLight to ::switchOffLight,
     ActionCommand.TakeLamp to ::takeLamp,
     ActionCommand.TakeChainsaw to ::takeChainsawOrDie,
-    ActionCommand.DropChainsaw to goActionForDropItem(Chainsaw, "Du har ingen sådan att släppa!", "Du släpper"),
+    ActionCommand.DropChainsaw to actionForDropItem(Chainsaw, "Du har ingen sådan att släppa!", "Du släpper"),
     ActionCommand.SawDownHedge to ::sawDownHedge,
     ActionCommand.LookAround to { _, currentRoom, currentState, _  -> SameRoomEvent("Du tittar dig omkring.", currentRoom, currentState)},
     ActionCommand.Inventory to goActionForInventory("Du bär inte på något.", "Du bär på"),
@@ -235,6 +243,12 @@ fun dropAnyKey(input: Input, currentRoom: Room, currentState: State, items: Item
         items.drop(key, currentRoom)
         DroppedItemEvent("Du släpper en nyckel")
     }
+fun examineKey(input: Input, currentRoom: Room, currentState: State, items: Items): Event =
+    if (items.carriedItems().contains(UnusedKey)) {
+        actionForExamineItem(UnusedKey, "En helt vanlig nyckel", "Då får du först plocka upp det igen!").invoke(input,currentRoom, currentState, items)
+    } else {
+        actionForExamineItem(UsedKey, "En helt vanlig nyckel", "Då får du först plocka upp det igen!").invoke(input,currentRoom, currentState, items)
+    }
 
 fun lookIn(input: Input, currentRoom: Room, currentState: State, items: Items): Event =
     when(currentState){
@@ -267,7 +281,7 @@ fun takeChainsawOrDie(input: Input, currentRoom: Room, currentState: State, item
     {
         EndEvent("Du ser inte vad du gör i mörkret! Hoppsan, du råkar sätta på den! Oj! Aj! \nDu blev till en hög av blod!")
     } else {
-        goActionForPickUpItem(Chainsaw, "Går inte att ta upp en sådan här!", "Du tar upp").invoke(input, currentRoom, currentState, items)
+        actionForPickUpItem(Chainsaw, "Går inte att ta upp en sådan här!", "Du tar upp").invoke(input, currentRoom, currentState, items)
     }
 
 fun sawDownHedge(input: Input, currentRoom: Room, currentState: State, items: Items): Event =
@@ -286,12 +300,6 @@ fun takeLamp(input: Input, currentRoom: Room, currentState: State, items: Items)
         litRoom, darkRoom -> Event("Du rycker och sliter, men lampan verkar fastsatt i golvet. Eller så är du bara väldigt svag!")
         else -> SameRoomEvent("Var ser du en lampa att ta?", currentRoom, currentState)
     }
-
-fun readReceipt(input: Input, currentRoom: Room, currentState: State, items: Items): Event =
-        when(items.carriedItems().contains(Receipt)){
-            true -> Event("Oh! Du har tydligen handlat mjölk, ost, yoghurt och skivbar leverpastej för några veckor sedan.")
-            false -> Event("Då får du först plocka upp det igen!")
-        }
 
 
 fun main() {

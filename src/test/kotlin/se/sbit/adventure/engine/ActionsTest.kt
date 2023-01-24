@@ -65,10 +65,10 @@ class ActionsTest {
     object DancingEvent: Event("Dance, dance, dance!")
 
     val actionMap: Map<CommandType, (Input, Room, State, Items) -> Event> = mapOf(
-        GoCommand.GoEast to goActionFromRoomConnectionsMap(connectedRooms),
-        GoCommand.GoWest to goActionFromRoomConnectionsMap(connectedRooms),
-        GoCommand.GoNorth to goActionFromRoomConnectionsMap(connectedRooms),
-        GoCommand.GoSouth to goActionFromRoomConnectionsMap(connectedRooms),
+        GoCommand.GoEast to actionForGo(connectedRooms),
+        GoCommand.GoWest to actionForGo(connectedRooms),
+        GoCommand.GoNorth to actionForGo(connectedRooms),
+        GoCommand.GoSouth to actionForGo(connectedRooms),
         ActionCommand.UseKey to ::useKey,
         ActionCommand.UseThing to ::useThing,
         ActionCommand.UseNotCarriedThing to ::useUncarriedThing,

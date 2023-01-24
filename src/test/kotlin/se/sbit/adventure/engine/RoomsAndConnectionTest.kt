@@ -42,10 +42,10 @@ class RoomsAndConnectionTest {
 
 
     val actionMap: Map<CommandType, (Input, Room, State, Items) -> Event> = mapOf(
-        GoCommand.GoEast to goActionFromRoomConnectionsMap(connectionsMap),
-        GoCommand.GoWest to goActionFromRoomConnectionsMap(connectionsMap),
-        GoCommand.GoNorth to goActionFromRoomConnectionsMap(connectionsMap),
-        GoCommand.GoSouth to goActionFromRoomConnectionsMap(connectionsMap),
+        GoCommand.GoEast to actionForGo(connectionsMap),
+        GoCommand.GoWest to actionForGo(connectionsMap),
+        GoCommand.GoNorth to actionForGo(connectionsMap),
+        GoCommand.GoSouth to actionForGo(connectionsMap),
     )
 
     @Test
