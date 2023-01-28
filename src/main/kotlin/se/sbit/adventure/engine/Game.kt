@@ -24,11 +24,9 @@ typealias RoomConnectionsMap =  Map<Room, List<Pair<Guard, Room>>>
 
 class Game(val connections: RoomConnectionsMap,
            itemsPlacementMap: ItemsPlacementMap = emptyMap(),
-           val actionMap: Map<CommandType, (Input, Room, State, Items) -> Event> = emptyMap(),
+           val actionMap: Map<CommandType, (Input, EventLog, Items) -> Event> = emptyMap(),
            val eventlog: EventLog = EventLog(),
-           var nonPlayerCharacters: List<Pair<NonPlayerCharacter, EventLog>> = emptyList(),
-           val startRoom: Room,
-           val startState:State
+           var nonPlayerCharacters: List<Pair<NonPlayerCharacter, EventLog>> = emptyList()
 ){
 
     val allItems: Items = Items(itemsPlacementMap)
@@ -37,7 +35,7 @@ class Game(val connections: RoomConnectionsMap,
     fun playerDo(input: Input, eventLog: EventLog): Event {
         return actionMap.getOrElse(input.command) {
             throw Exception("Mama Mia! Undefined command in input ${input.command}")
-        }.invoke(input, eventLog.getCurrentRoom().first, eventLog.getCurrentRoom().second, allItems)
+        }.invoke(input, eventLog, allItems)
     }
 
 }

@@ -18,9 +18,10 @@ class DroppedItemEvent(gameText: String):Event(gameText)
 class NoSuchItemToDropItemEvent(gameText: String):Event(gameText)
 class InventoryEvent(gameText: String):Event(gameText)
 
-fun actionForPickUpItem(itemToPickUp:ItemType, noSuchItemHereEventText: String = "That didn't work!", pickedUpEventText: String = "Picked up"): (Input, Room, State, Items) -> Event
+fun actionForPickUpItem(itemToPickUp:ItemType, noSuchItemHereEventText: String = "That didn't work!", pickedUpEventText: String = "Picked up"): (Input, EventLog, Items) -> Event
 {
-    return fun(input, currentRoom, currentState, items): Event {
+    return fun(input, eventLog, items): Event {
+        val currentRoom = eventLog.getCurrentRoom()
         if (items.itemsIn(currentRoom).none { it == itemToPickUp }){
             return NoSuchItemHereEvent(noSuchItemHereEventText)
         }
@@ -29,29 +30,29 @@ fun actionForPickUpItem(itemToPickUp:ItemType, noSuchItemHereEventText: String =
     }
 }
 
-fun actionForExamineItem(itemToExam: ItemType, successGameText: String= "You don't see anything special", failureGameText:String = "You don't carry that" ): (Input, Room, State, Items) -> Event =
-    fun(_, _, _, items): Event =
+fun actionForExamineItem(itemToExam: ItemType, successGameText: String= "You don't see anything special", failureGameText:String = "You don't carry that" ): (Input, EventLog, Items) -> Event =
+    fun(_, _, items): Event =
         when(items.carriedItems().contains(itemToExam)) {
             true -> Event(successGameText)
             false -> Event(failureGameText)
         }
 
 
-fun actionForDropItem(itemToDrop:ItemType, noSuchItemToDropEventText: String = "That didn't work!", droppedItemEventText: String = "Dropped"): (Input, Room, State, Items) -> Event
+fun actionForDropItem(itemToDrop:ItemType, noSuchItemToDropEventText: String = "That didn't work!", droppedItemEventText: String = "Dropped"): (Input, EventLog, Items) -> Event
 {
-    return fun(input, currentRoom, currentState, items): Event {
+    return fun(input, eventLog, items): Event {
         if (items.carriedItems().none { it == itemToDrop }){
             return NoSuchItemToDropItemEvent(noSuchItemToDropEventText)
         }
-        items.drop(itemToDrop, currentRoom)
+        items.drop(itemToDrop, eventLog.getCurrentRoom())
         return DroppedItemEvent("${droppedItemEventText} ${itemToDrop.description}.")
     }
 
 }
 
-fun goActionForInventory(notCarryingAnythingEventText: String = "You don't carry anything!", carryingEventText: String = "You carry"): (Input, Room, State, Items) -> Event
+fun goActionForInventory(notCarryingAnythingEventText: String = "You don't carry anything!", carryingEventText: String = "You carry"): (Input, EventLog, Items) -> Event
 {
-    return fun(input, currentRoom, currentState, items): Event {
+    return fun(_, _, items): Event {
         if (items.carriedItems().isEmpty()) {
             return InventoryEvent(notCarryingAnythingEventText)
         }

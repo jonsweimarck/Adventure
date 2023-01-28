@@ -18,9 +18,12 @@ infix fun Guard.or(g2: Guard): Guard {
 }
 
 fun actionForGo(connectionsMap: RoomConnectionsMap,
-                sameRoomEventText: String = "That didn't work!"): (Input, Room, State, Items) -> Event
+                sameRoomEventText: String = "That didn't work!"): (Input, EventLog, Items) -> Event
 {
-    return fun(input, currentRoom, currentState, items): Event {
+    return fun(input, eventLog, items): Event {
+        val currentRoom  = eventLog.getCurrentRoom()
+        val currentState = eventLog.getCurrentState()
+
         // find new room
         val roomConnections = connectionsMap.getOrElse(currentRoom) {
             // Should neeeeeever happen.The room has no connections!

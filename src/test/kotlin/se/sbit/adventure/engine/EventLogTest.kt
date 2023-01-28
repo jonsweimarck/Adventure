@@ -28,8 +28,8 @@ class EventLogTest {
         val roomB = Room(listOf(Pair({ _, _ -> true}, stateB)))
 
         val log = EventLog.fromList(listOf(NewRoomEvent("", roomA, stateA, Player)))
-        expectThat(log.getCurrentRoom().first).isEqualTo(roomA)
-        expectThat(log.getCurrentRoom().second).isEqualTo(stateA)
+        expectThat(log.getCurrentRoom()).isEqualTo(roomA)
+        expectThat(log.getCurrentState()).isEqualTo(stateA)
     }
 
     @Test
@@ -44,8 +44,8 @@ class EventLogTest {
         val sameRoomB = SameRoomEvent("", roomB, stateB, Player)
 
         val log = EventLog.fromList(listOf(newRoomB, sameRoomB, newRoomA, sameRoomA))
-        expectThat(log.getCurrentRoom().first).isEqualTo(roomA)
-        expectThat(log.getCurrentRoom().second).isEqualTo(stateA)
+        expectThat(log.getCurrentRoom()).isEqualTo(roomA)
+        expectThat(log.getCurrentState()).isEqualTo(stateA)
     }
 
     @Test

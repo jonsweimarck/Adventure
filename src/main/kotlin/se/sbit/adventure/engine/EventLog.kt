@@ -10,10 +10,16 @@ class EventLog {
         return events
     }
 
-    fun getCurrentRoom(): Pair<Room, State> {
+
+
+    fun getCurrentRoomAndState(): Pair<Room, State> {
         val lastNewRoom = events.filterIsInstance<NewRoomEvent>().last()
         return Pair (lastNewRoom.newRoom, lastNewRoom.newState)
     }
+
+    fun getCurrentRoom(): Room  = getCurrentRoomAndState().first
+    fun getCurrentState(): State  = getCurrentRoomAndState().second
+
 
     companion object {
         fun fromList(initialEvents: List<Event>): EventLog {

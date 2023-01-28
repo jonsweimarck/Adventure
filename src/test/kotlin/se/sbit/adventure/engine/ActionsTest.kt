@@ -64,7 +64,7 @@ class ActionsTest {
 
     object DancingEvent: Event("Dance, dance, dance!")
 
-    val actionMap: Map<CommandType, (Input, Room, State, Items) -> Event> = mapOf(
+    val actionMap: Map<CommandType, (Input, EventLog, Items) -> Event> = mapOf(
         GoCommand.GoEast to actionForGo(connectedRooms),
         GoCommand.GoWest to actionForGo(connectedRooms),
         GoCommand.GoNorth to actionForGo(connectedRooms),
@@ -72,16 +72,16 @@ class ActionsTest {
         ActionCommand.UseKey to ::useKey,
         ActionCommand.UseThing to ::useThing,
         ActionCommand.UseNotCarriedThing to ::useUncarriedThing,
-        ActionCommand.Dance to { _, _, _, _  -> DancingEvent }
+        ActionCommand.Dance to { _, _, _  -> DancingEvent }
     )
 
 
-    fun useKey(input: Input, currentRoom: Room, currentState: State, items: Items): Event {
+    fun useKey(input: Input, eventLog: EventLog, items: Items): Event {
         if(items.carriedItems().filterIsInstance<Key>().isEmpty()){
             return NoKeyToBeUsed;
         }
 
-        if(currentRoom != roomA){
+        if(eventLog.getCurrentRoom() != roomA){
             return NoUsageOfKey;
         }
         val currentKey = items.carriedItems().filterIsInstance<Key>().first()
@@ -93,12 +93,12 @@ class ActionsTest {
         return KeyUsedSuccessfully(UsedKey);
     }
 
-    fun useThing(input: Input, currentRoom: Room, currentState: State, items: Items): Event {
+    fun useThing(input: Input, eventLog: EventLog, items: Items): Event {
         items.replaceCarried(UnusedThing, UsedThing)
         return ThingUsedSuccessfully;
     }
 
-    fun useUncarriedThing(input: Input, currentRoom: Room, currentState: State, items: Items): Event {
+    fun useUncarriedThing(input: Input, eventLog: EventLog, items: Items): Event {
         items.replaceCarried(Sword, UsedThing) // <- Should throw as we are not carrying a Receipt
         return ThingUsedSuccessfully;
     }
@@ -109,7 +109,7 @@ class ActionsTest {
         val currentRoom = roomA
         val currentState = stateA
         val eventLog = EventLog.fromList(listOf(NewRoomEvent("", roomA, stateA, Player))) // <- simple eventlog with only the start room/state
-        val game = Game(connectedRooms, placementMap, actionMap,  startRoom = currentRoom, startState = currentState, eventlog = eventLog)
+        val game = Game(connectedRooms, placementMap, actionMap, eventlog = eventLog)
 
         val event = game.playerDo(Input(ActionCommand.Dance), game.eventlog)
         expectThat(event).isA<DancingEvent>()
@@ -121,7 +121,7 @@ class ActionsTest {
         val currentRoom = roomA
         val currentState = stateA
         val eventLog = EventLog.fromList(listOf(NewRoomEvent("", roomA, stateA, Player))) // <- simple eventlog with only the start room/state
-        val game = Game(connectedRooms, placementMap, actionMap, startRoom = currentRoom, startState = currentState, eventlog = eventLog)
+        val game = Game(connectedRooms, placementMap, actionMap, eventlog = eventLog)
 
 
         expectThat(game.allItems.carriedItems()).contains(UnusedKey)
@@ -135,7 +135,7 @@ class ActionsTest {
         val currentRoom = roomA
         val currentState = stateA
         val eventLog = EventLog.fromList(listOf(NewRoomEvent("", roomA, stateA, Player))) // <- simple eventlog with only the start room/state
-        val game = Game(connectedRooms, placementMap, actionMap, startRoom = currentRoom, startState = currentState, eventlog = eventLog)
+        val game = Game(connectedRooms, placementMap, actionMap, eventlog = eventLog)
 
         expectThat(game.allItems.carriedItems()).contains(UnusedThing)
         expectThat(game.allItems.carriedItems()).doesNotContain(UsedThing)
@@ -151,7 +151,7 @@ class ActionsTest {
         val currentRoom = roomA
         val currentState = stateA
         val eventLog = EventLog.fromList(listOf(NewRoomEvent("", roomA, stateA, Player))) // <- simple eventlog with only the start room/state
-        val game = Game(connectedRooms, placementMap, actionMap, startRoom = currentRoom, startState = currentState, eventlog = eventLog)
+        val game = Game(connectedRooms, placementMap, actionMap, eventlog = eventLog)
 
         expectThat(game.allItems.carriedItems()).doesNotContain(Sword)
 
@@ -163,7 +163,7 @@ class ActionsTest {
         val currentRoom = roomA
         val currentState = stateA
         val eventLog = EventLog.fromList(listOf(NewRoomEvent("", roomA, stateA, Player))) // <- simple eventlog with only the start room/state
-        val game = Game(connectedRooms, placementMap, actionMap, startRoom = currentRoom, startState = currentState, eventlog = eventLog)
+        val game = Game(connectedRooms, placementMap, actionMap, eventlog = eventLog)
 
         game.allItems.drop(UnusedKey, currentRoom)
         expectThat(game.allItems.carriedItems()).doesNotContain(UnusedKey)
@@ -176,7 +176,7 @@ class ActionsTest {
         val currentRoom = roomB     // <- starts in roomB where the key can't be used
         val currentState = stateB
         val eventLog = EventLog.fromList(listOf(NewRoomEvent("", roomB, stateB, Player))) // <- simple eventlog with only the start room/state
-        val game = Game(connectedRooms, placementMap, actionMap, startRoom = currentRoom, startState = currentState, eventlog = eventLog)
+        val game = Game(connectedRooms, placementMap, actionMap, eventlog = eventLog)
 
         expectThat(game.allItems.carriedItems()).contains(UnusedKey)
         val event = game.playerDo(Input(ActionCommand.UseKey), game.eventlog)

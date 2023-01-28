@@ -41,7 +41,7 @@ class RoomsAndConnectionTest {
     )
 
 
-    val actionMap: Map<CommandType, (Input, Room, State, Items) -> Event> = mapOf(
+    val actionMap: Map<CommandType, (Input, EventLog, Items) -> Event> = mapOf(
         GoCommand.GoEast to actionForGo(connectionsMap),
         GoCommand.GoWest to actionForGo(connectionsMap),
         GoCommand.GoNorth to actionForGo(connectionsMap),
@@ -50,14 +50,15 @@ class RoomsAndConnectionTest {
 
     @Test
     fun `starts in a room`() {
-        val game = Game(connectionsMap, startRoom = roomA, startState = stateA)
-        expectThat(game.startRoom).isEqualTo(roomA)
+        val eventLog = EventLog.fromList(listOf(NewRoomEvent("", roomA, stateA, Player))) // <- simple eventlog with only the start room/state
+        val game = Game(connectionsMap, eventlog = eventLog)
+        expectThat(game.eventlog.getCurrentRoom()).isEqualTo(roomA)
     }
 
     @Test
     fun `can go to connected rooms`() {
         val eventLog = EventLog.fromList(listOf(NewRoomEvent("", roomA, stateA, Player))) // <- simple eventlog with only the start room/state
-        val game = Game(connectionsMap, actionMap = actionMap, startRoom = roomA, startState = stateA, eventlog = eventLog)
+        val game = Game(connectionsMap, actionMap = actionMap, eventlog = eventLog)
 
 
         val goEastEvent = game.playerDo(Input(GoCommand.GoEast), game.eventlog)
@@ -76,7 +77,7 @@ class RoomsAndConnectionTest {
     @Test
     fun `will end up in the first matching state in a room`() {
         val eventLog = EventLog.fromList(listOf(NewRoomEvent("", roomB, stateB, Player))) // <- simple eventlog with only the start room/state
-        val game = Game(connectionsMap, actionMap = actionMap, startRoom = roomB, startState = stateB, eventlog = eventLog)
+        val game = Game(connectionsMap, actionMap = actionMap, eventlog = eventLog)
 
         val goNorthEvent = game.playerDo(Input(GoCommand.GoNorth), game.eventlog)
         expectThat(goNorthEvent).isA<NewRoomEvent>()
@@ -90,7 +91,7 @@ class RoomsAndConnectionTest {
     @Test
     fun `can not go to not connected rooms`() {
         val eventLog = EventLog.fromList(listOf(NewRoomEvent("", roomA, stateA, Player))) // <- simple eventlog with only the start room/state
-        val game = Game(connectionsMap, actionMap = actionMap, startRoom = roomA, startState = stateA, eventlog = eventLog)
+        val game = Game(connectionsMap, actionMap = actionMap, eventlog = eventLog)
 
         val goNorthEvent = game.playerDo(Input(GoCommand.GoNorth), game.eventlog)
         expectThat(goNorthEvent).isA<SameRoomEvent>()

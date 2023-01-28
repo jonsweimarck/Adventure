@@ -178,7 +178,7 @@ class SwitchedLightOffEvent(currentRoom: Room, newState: State): RoomEvent("Nu b
 class HedgeSawnDownEvent:RoomEvent("Vroooooom! Du sågar ner häcken som värsta trädgårdsmästaren!", garden, gardenWithSawnDownHedge, Player)
 
 
-val actionMap: Map<CommandType, (Input, Room, State,  Items) -> Event> = mapOf(
+val actionMap: Map<CommandType, (Input, EventLog,  Items) -> Event> = mapOf(
     GoCommand.GoEast to actionForGo(connectedRooms, "Du kan inte gå dit."),
     GoCommand.GoWest to actionForGo(connectedRooms,"Du kan inte gå dit.!"),
     GoCommand.GoNorth to actionForGo(connectedRooms,"Du kan inte gå dit."),
@@ -189,8 +189,8 @@ val actionMap: Map<CommandType, (Input, Room, State,  Items) -> Event> = mapOf(
     ActionCommand.ExamineChainsaw to actionForExamineItem(Chainsaw, "Wow! En 13 tums Husqvarna 550 XPG Mark II! Orangeröd! ", "Då får du först plocka upp den igen!"),
 
     ActionCommand.UseKey to ::useKey,
-    ActionCommand.GibberishInput to { _, _, _, _  -> Event("Hmmm, det där förstod jag inte!") },
-    ActionCommand.EndGame to { _, _, _ , _ -> EndEvent ("Slutspelat!\nSlut för idag, tack för idag!") },
+    ActionCommand.GibberishInput to { _, _, _  -> Event("Hmmm, det där förstod jag inte!") },
+    ActionCommand.EndGame to { _, _, _ -> EndEvent ("Slutspelat!\nSlut för idag, tack för idag!") },
     ActionCommand.TakeReceipt to actionForPickUpItem(Receipt, "Går inte att ta upp en sådan här!", "Du tar upp"),
     ActionCommand.DropReceipt to actionForDropItem(Receipt, "Du har ingen sådan att släppa!", "Du släpper"),
     ActionCommand.TakeKey to ::takeAnyKey,
@@ -204,10 +204,10 @@ val actionMap: Map<CommandType, (Input, Room, State,  Items) -> Event> = mapOf(
     ActionCommand.TakeChainsaw to ::takeChainsawOrDie,
     ActionCommand.DropChainsaw to actionForDropItem(Chainsaw, "Du har ingen sådan att släppa!", "Du släpper"),
     ActionCommand.SawDownHedge to ::sawDownHedge,
-    ActionCommand.LookAround to { _, currentRoom, currentState, _  -> SameRoomEvent("Du tittar dig omkring.", currentRoom, currentState, Player)},
+    ActionCommand.LookAround to { _, eventLog, _  -> SameRoomEvent("Du tittar dig omkring.", eventLog.getCurrentRoom(), eventLog.getCurrentState(), Player)},
     ActionCommand.Inventory to goActionForInventory("Du bär inte på något.", "Du bär på"),
-    ActionCommand.Dance to { _, _, _, _  -> Event("Dance, dance, dance!")},
-    ActionCommand.Smash to {  _, _, _, _  -> Event("Så där gör man bara inte! Det kan räknas som skadegörelse och vara straffbart med böter eller fängelse enligt Brottbalken 12 kap. 1 §!")},
+    ActionCommand.Dance to { _, _, _  -> Event("Dance, dance, dance!")},
+    ActionCommand.Smash to {  _, _, _  -> Event("Så där gör man bara inte! Det kan räknas som skadegörelse och vara straffbart med böter eller fängelse enligt Brottbalken 12 kap. 1 §!")},
 )
 
 //fun npcNextAction(npcCurrentRoom: Room, playerCurrentRoom: Room, playerCurrentState: State, playerItems: Items, eventLog: EventLog): Event {
@@ -225,7 +225,7 @@ val actionMap: Map<CommandType, (Input, Room, State,  Items) -> Event> = mapOf(
 class gubbe: NPC("En gubbe")
 
 
-fun useKey(input: Input, currentRoom: Room, currentState: State, items: Items): Event {
+fun useKey(input: Input, eventLog: EventLog, items: Items): Event {
     if(items.carriedItems().filterIsInstance<Key>().isEmpty()){
         return NoKeyToBeUsed;
     }
@@ -233,86 +233,88 @@ fun useKey(input: Input, currentRoom: Room, currentState: State, items: Items): 
     if(currentKey is UsedKey) {
         return KeyAlreadyUsed
     }
-    if(currentState != inFrontOfClosedDoor){
+    if(eventLog.getCurrentState() != inFrontOfClosedDoor){
         return NoUsageOfKey;
     }
     items.replaceCarried(currentKey, UsedKey)
-    return KeyUsedSuccessfully(currentRoom, inFrontOfOpenDoor)
+    return KeyUsedSuccessfully(eventLog.getCurrentRoom(), inFrontOfOpenDoor)
 }
 
-fun takeAnyKey(input: Input, currentRoom: Room, currentState: State, items: Items): Event =
+fun takeAnyKey(input: Input, eventLog: EventLog, items: Items): Event {
+    val currentRoom = eventLog.getCurrentRoom()
     if (items.itemsIn(currentRoom).filterIsInstance<Key>().isEmpty()) {
-        NoSuchItemHereEvent("Går inte att ta upp en sådan här!")
+        return NoSuchItemHereEvent("Går inte att ta upp en sådan här!")
     } else {
         val key = items.itemsIn(currentRoom).filterIsInstance<Key>().first()
         items.pickUp(key, currentRoom)
-        PickedUpItemEvent("Du tar upp en nyckel")
+        return PickedUpItemEvent("Du tar upp en nyckel")
     }
+}
 
-fun dropAnyKey(input: Input, currentRoom: Room, currentState: State, items: Items): Event =
+fun dropAnyKey(input: Input, eventLog: EventLog, items: Items): Event =
     if (items.carriedItems().filterIsInstance<Key>().isEmpty()) {
         NoSuchItemToDropItemEvent("Du har ingen sådan att släppa!")
     } else {
         val key = items.carriedItems().filterIsInstance<Key>().first()
-        items.drop(key, currentRoom)
+        items.drop(key, eventLog.getCurrentRoom())
         DroppedItemEvent("Du släpper en nyckel")
     }
-fun examineKey(input: Input, currentRoom: Room, currentState: State, items: Items): Event =
+fun examineKey(input: Input, eventLog: EventLog, items: Items): Event =
     if (items.carriedItems().contains(UnusedKey)) {
-        actionForExamineItem(UnusedKey, "En helt vanlig nyckel", "Då får du först plocka upp det igen!").invoke(input,currentRoom, currentState, items)
+        actionForExamineItem(UnusedKey, "En helt vanlig nyckel", "Då får du först plocka upp det igen!").invoke(input,eventLog, items)
     } else {
-        actionForExamineItem(UsedKey, "En helt vanlig nyckel", "Då får du först plocka upp det igen!").invoke(input,currentRoom, currentState, items)
+        actionForExamineItem(UsedKey, "En helt vanlig nyckel", "Då får du först plocka upp det igen!").invoke(input,eventLog, items)
     }
 
-fun lookIn(input: Input, currentRoom: Room, currentState: State, items: Items): Event =
-    when(currentState){
-        inFrontOfOpenDoor  -> if (lightIsOn(input,  currentRoom)) {
-            SameRoomEvent("Du ser knappt något eftersom det enda ljuset kommer från en liten golvlampa.", currentRoom, currentState, Player)
+fun lookIn(input: Input, eventLog: EventLog, items: Items): Event =
+    when(eventLog.getCurrentState()){
+        inFrontOfOpenDoor  -> if (lightIsOn(input,  eventLog.getCurrentRoom())) {
+            SameRoomEvent("Du ser knappt något eftersom det enda ljuset kommer från en liten golvlampa.", eventLog.getCurrentRoom(), eventLog.getCurrentState(), Player)
         } else {
-            SameRoomEvent("Det ser helt mörkt ut där inne.", currentRoom, currentState, Player)
+            SameRoomEvent("Det ser helt mörkt ut där inne.", eventLog.getCurrentRoom(), eventLog.getCurrentState(), Player)
         }
-        inFrontOfClosedDoor -> SameRoomEvent("Duh! Det är en stängd dörr i vägen!", currentRoom, currentState, Player)
-        else -> SameRoomEvent("Här? Hur då?", currentRoom, currentState, Player)
+        inFrontOfClosedDoor -> SameRoomEvent("Duh! Det är en stängd dörr i vägen!", eventLog.getCurrentRoom(), eventLog.getCurrentState(), Player)
+        else -> SameRoomEvent("Här? Hur då?", eventLog.getCurrentRoom(), eventLog.getCurrentState(), Player)
     }
 
 
-fun switchOnLight(input: Input, currentRoom: Room, currentState: State, items: Items): Event =
-    when(currentState){
-        litRoom -> SameRoomEvent("Det är redan tänt, dumhuvve!", currentRoom, currentState, Player)
-        darkRoom -> SwitchedLightOnEvent(currentRoom, litRoom)
-        else -> SameRoomEvent("Här? Hur då?", currentRoom, currentState, Player)
+fun switchOnLight(input: Input, eventLog: EventLog, items: Items): Event =
+    when(eventLog.getCurrentState()){
+        litRoom -> SameRoomEvent("Det är redan tänt, dumhuvve!", eventLog.getCurrentRoom(), eventLog.getCurrentState(),  Player)
+        darkRoom -> SwitchedLightOnEvent(eventLog.getCurrentRoom(), litRoom)
+        else -> SameRoomEvent("Här? Hur då?", eventLog.getCurrentRoom(), eventLog.getCurrentState(), Player)
     }
 
-fun switchOffLight(input: Input, currentRoom: Room, currentState: State, items: Items): Event =
-    when(currentState){
-        darkRoom -> SameRoomEvent("Den är redan släckt, men det kanske du inte ser eftersom det är så mörkt, haha!", currentRoom, currentState, Player)
-        litRoom -> SwitchedLightOffEvent(currentRoom, darkRoom)
-        else -> SameRoomEvent("Här? Hur då?", currentRoom, currentState, Player)
+fun switchOffLight(input: Input, eventLog: EventLog, items: Items): Event =
+    when(eventLog.getCurrentState()){
+        darkRoom -> SameRoomEvent("Den är redan släckt, men det kanske du inte ser eftersom det är så mörkt, haha!", eventLog.getCurrentRoom(), eventLog.getCurrentState(), Player)
+        litRoom -> SwitchedLightOffEvent(eventLog.getCurrentRoom(), darkRoom)
+        else -> SameRoomEvent("Här? Hur då?", eventLog.getCurrentRoom(), eventLog.getCurrentState(), Player)
     }
 
-fun takeChainsawOrDie(input: Input, currentRoom: Room, currentState: State, items: Items): Event =
-    if (currentState == darkRoom && items.itemsIn(inside).contains(Chainsaw))
+fun takeChainsawOrDie(input: Input, eventLog: EventLog, items: Items): Event =
+    if (eventLog.getCurrentState() == darkRoom && items.itemsIn(inside).contains(Chainsaw))
     {
         EndEvent("Du ser inte vad du gör i mörkret! Hoppsan, du råkar sätta på den! Oj! Aj! \nDu blev till en hög av blod!")
     } else {
-        actionForPickUpItem(Chainsaw, "Går inte att ta upp en sådan här!", "Du tar upp").invoke(input, currentRoom, currentState, items)
+        actionForPickUpItem(Chainsaw, "Går inte att ta upp en sådan här!", "Du tar upp").invoke(input, eventLog, items)
     }
 
-fun sawDownHedge(input: Input, currentRoom: Room, currentState: State, items: Items): Event =
+fun sawDownHedge(input: Input, eventLog: EventLog, items: Items): Event =
     if(items.carriedItems().contains(Chainsaw)){
-        when(currentState){
-            gardenWithSawnDownHedge -> SameRoomEvent("De kvarvarande häckarna går inte att såga ner av någon mystisk anledning.", currentRoom, currentState, Player)
+        when(eventLog.getCurrentState()){
+            gardenWithSawnDownHedge -> SameRoomEvent("De kvarvarande häckarna går inte att såga ner av någon mystisk anledning.", eventLog.getCurrentRoom(), eventLog.getCurrentState(), Player)
             gardenWithHedge -> HedgeSawnDownEvent()
-            else -> SameRoomEvent("Du sätter igång motorsågen och viftar med den i luften. Wrooom, wroom! Du känner inte för att såga i något av det du ser, så du stänger av den igen.", currentRoom, currentState, Player)
+            else -> SameRoomEvent("Du sätter igång motorsågen och viftar med den i luften. Wrooom, wroom! Du känner inte för att såga i något av det du ser, så du stänger av den igen.", eventLog.getCurrentRoom(), eventLog.getCurrentState(), Player)
         }
     }else{
         Event("Nu går du väl ändå händelserna i förväg? Du har ju inget att såga med!")
     }
 
-fun takeLamp(input: Input, currentRoom: Room, currentState: State, items: Items): Event =
-    when(currentState){
+fun takeLamp(input: Input, eventLog: EventLog, items: Items): Event =
+    when(eventLog.getCurrentState()){
         litRoom, darkRoom -> Event("Du rycker och sliter, men lampan verkar fastsatt i golvet. Eller så är du bara väldigt svag!")
-        else -> SameRoomEvent("Var ser du en lampa att ta?", currentRoom, currentState, Player)
+        else -> SameRoomEvent("Var ser du en lampa att ta?", eventLog.getCurrentRoom(), eventLog.getCurrentState(), Player)
     }
 
 
@@ -322,11 +324,11 @@ fun main() {
     var event: Event = NewRoomEvent("Welcome!\n", startRoom, startState, Player)
     eventLog.add(event) //<-- Must have a starting NewRoomEvent so the game can figure out where the player starts
 
-    val game = Game(connectedRooms, placementMap, actionMap, eventLog,  emptyList(), startRoom, startState)
+    val game = Game(connectedRooms, placementMap, actionMap, eventLog,  emptyList())
 
     while (event !is EndEvent){
-        var currentRoom = game.eventlog.getCurrentRoom().first
-        var currentState = game.eventlog.getCurrentRoom().second
+        val currentRoom = game.eventlog.getCurrentRoom()
+        val currentState = game.eventlog.getCurrentState()
 
         StandardInOut.showText(
             if(event is RoomEvent) {
@@ -339,7 +341,7 @@ fun main() {
         event = game.playerDo(Input(Interpreter.interpret(input, input2Command, ActionCommand.GibberishInput)), game.eventlog)
         eventLog.add(event)
 
-        game.nonPlayerCharacters = game.nonPlayerCharacters.map {  Pair(it.first, EventLog.fromList(it.second.add(it.first.doAction(it.second.getCurrentRoom().first, currentRoom, currentState, eventLog))))}
+        game.nonPlayerCharacters = game.nonPlayerCharacters.map {  Pair(it.first, EventLog.fromList(it.second.add(it.first.doAction(it.second.getCurrentRoom(), currentRoom, currentState, eventLog))))}
     }
 
     StandardInOut.showText(event.gameText)

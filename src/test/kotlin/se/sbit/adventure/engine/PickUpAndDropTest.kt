@@ -41,9 +41,7 @@ class PickUpAndDropTest {
 
     @Test
     fun `can carry item from start`() {
-        val currentRoom = roomA
-        val currentState = stateA
-        val game = Game(connectedRooms, itemMap, startRoom = currentRoom, startState = currentState)
+        val game = Game(connectedRooms, itemMap)
 
         expectThat(game.allItems.carriedItems()).containsExactly(Bottle)
     }
@@ -51,8 +49,7 @@ class PickUpAndDropTest {
     @Test
     fun `can pick up item in current room`() {
         val currentRoom = roomA
-        val currentState = stateA
-        val game = Game(connectedRooms, itemMap, startRoom = currentRoom, startState = currentState)
+        val game = Game(connectedRooms, itemMap,)
 
         expectThat(game.allItems.carriedItems()).containsExactly(Bottle)
         game.allItems.pickUp(Sword, currentRoom)
@@ -62,27 +59,21 @@ class PickUpAndDropTest {
 
     @Test
     fun `cannot pick up item from another room`() {
-        val currentRoom = roomA
-        val currentState = stateA
-        val game = Game(connectedRooms, itemMap, startRoom = currentRoom, startState = currentState)
+        val game = Game(connectedRooms, itemMap)
 
         expectCatching {game.allItems.pickUp(Key, roomA)}.isFailure()
     }
 
     @Test
     fun `cannot pick up item already carried`() {
-        val currentRoom = roomA
-        val currentState = stateA
-        val game = Game(connectedRooms, itemMap, startRoom = currentRoom, startState = currentState)
+        val game = Game(connectedRooms, itemMap)
 
         expectCatching {game.allItems.pickUp(Bottle, roomA)}.isFailure()
     }
 
     @Test
     fun `can drop carried item`() {
-        val currentRoom = roomA
-        val currentState = stateA
-        val game = Game(connectedRooms, itemMap, startRoom = currentRoom, startState = currentState)
+        val game = Game(connectedRooms, itemMap)
 
         expectThat(game.allItems.carriedItems()).containsExactly(Bottle)
         game.allItems.drop(Bottle, roomA)
@@ -91,9 +82,7 @@ class PickUpAndDropTest {
 
     @Test
     fun `cannot drop item not carried`() {
-        val currentRoom = roomA
-        val currentState = stateA
-        val game = Game(connectedRooms, itemMap, startRoom = currentRoom, startState = currentState)
+        val game = Game(connectedRooms, itemMap)
 
         expectCatching {game.allItems.drop(Key, roomA)}.isFailure()
     }
