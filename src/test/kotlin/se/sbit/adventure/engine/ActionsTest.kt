@@ -108,9 +108,10 @@ class ActionsTest {
     fun `can do an action in any room without carrying any item`() {
         val currentRoom = roomA
         val currentState = stateA
-        val game = Game(connectedRooms, placementMap, actionMap,  startRoom = currentRoom, startState = currentState)
+        val eventLog = EventLog.fromList(listOf(NewRoomEvent("", roomA, stateA, Player))) // <- simple eventlog with only the start room/state
+        val game = Game(connectedRooms, placementMap, actionMap,  startRoom = currentRoom, startState = currentState, eventlog = eventLog)
 
-        val event = game.playerDo(Input(ActionCommand.Dance), currentRoom, currentState)
+        val event = game.playerDo(Input(ActionCommand.Dance), game.eventlog)
         expectThat(event).isA<DancingEvent>()
     }
 
@@ -119,10 +120,12 @@ class ActionsTest {
     fun `must carry an item to do an action`() {
         val currentRoom = roomA
         val currentState = stateA
-        val game = Game(connectedRooms, placementMap, actionMap, startRoom = currentRoom, startState = currentState)
+        val eventLog = EventLog.fromList(listOf(NewRoomEvent("", roomA, stateA, Player))) // <- simple eventlog with only the start room/state
+        val game = Game(connectedRooms, placementMap, actionMap, startRoom = currentRoom, startState = currentState, eventlog = eventLog)
+
 
         expectThat(game.allItems.carriedItems()).contains(UnusedKey)
-        val event = game.playerDo(Input(ActionCommand.UseKey), currentRoom, currentState)
+        val event = game.playerDo(Input(ActionCommand.UseKey), game.eventlog)
         expectThat(event).isA<KeyUsedSuccessfully>()
         expectThat((event as KeyUsedSuccessfully).newKey).isEqualTo(UsedKey)
     }
@@ -131,12 +134,13 @@ class ActionsTest {
     fun `can do action that replaces carried item`() {
         val currentRoom = roomA
         val currentState = stateA
-        val game = Game(connectedRooms, placementMap, actionMap, startRoom = currentRoom, startState = currentState)
+        val eventLog = EventLog.fromList(listOf(NewRoomEvent("", roomA, stateA, Player))) // <- simple eventlog with only the start room/state
+        val game = Game(connectedRooms, placementMap, actionMap, startRoom = currentRoom, startState = currentState, eventlog = eventLog)
 
         expectThat(game.allItems.carriedItems()).contains(UnusedThing)
         expectThat(game.allItems.carriedItems()).doesNotContain(UsedThing)
 
-        game.playerDo(Input(ActionCommand.UseThing), currentRoom, currentState)
+        game.playerDo(Input(ActionCommand.UseThing), game.eventlog)
 
         expectThat(game.allItems.carriedItems()).contains(UsedThing)
         expectThat(game.allItems.carriedItems()).doesNotContain(UnusedThing)
@@ -146,22 +150,24 @@ class ActionsTest {
     fun `cannot do action that replaces carried item when item is not carried`() {
         val currentRoom = roomA
         val currentState = stateA
-        val game = Game(connectedRooms, placementMap, actionMap, startRoom = currentRoom, startState = currentState)
+        val eventLog = EventLog.fromList(listOf(NewRoomEvent("", roomA, stateA, Player))) // <- simple eventlog with only the start room/state
+        val game = Game(connectedRooms, placementMap, actionMap, startRoom = currentRoom, startState = currentState, eventlog = eventLog)
 
         expectThat(game.allItems.carriedItems()).doesNotContain(Sword)
 
-        expectCatching {game.playerDo(Input(ActionCommand.UseNotCarriedThing), currentRoom, currentState)}.isFailure()
+        expectCatching {game.playerDo(Input(ActionCommand.UseNotCarriedThing), game.eventlog)}.isFailure()
     }
 
     @Test
     fun `cannot do action if not carrying correct item`() {
         val currentRoom = roomA
         val currentState = stateA
-        val game = Game(connectedRooms, placementMap, actionMap, startRoom = currentRoom, startState = currentState)
+        val eventLog = EventLog.fromList(listOf(NewRoomEvent("", roomA, stateA, Player))) // <- simple eventlog with only the start room/state
+        val game = Game(connectedRooms, placementMap, actionMap, startRoom = currentRoom, startState = currentState, eventlog = eventLog)
 
         game.allItems.drop(UnusedKey, currentRoom)
         expectThat(game.allItems.carriedItems()).doesNotContain(UnusedKey)
-        val event = game.playerDo(Input(ActionCommand.UseKey), currentRoom, currentState)
+        val event = game.playerDo(Input(ActionCommand.UseKey), game.eventlog)
         expectThat(event).isA<NoKeyToBeUsed>()
     }
 
@@ -169,10 +175,11 @@ class ActionsTest {
     fun `cannot do action specific for another room`() {
         val currentRoom = roomB     // <- starts in roomB where the key can't be used
         val currentState = stateB
-        val game = Game(connectedRooms, placementMap, actionMap, startRoom = currentRoom, startState = currentState)
+        val eventLog = EventLog.fromList(listOf(NewRoomEvent("", roomB, stateB, Player))) // <- simple eventlog with only the start room/state
+        val game = Game(connectedRooms, placementMap, actionMap, startRoom = currentRoom, startState = currentState, eventlog = eventLog)
 
         expectThat(game.allItems.carriedItems()).contains(UnusedKey)
-        val event = game.playerDo(Input(ActionCommand.UseKey), currentRoom, currentState)
+        val event = game.playerDo(Input(ActionCommand.UseKey), game.eventlog)
         expectThat(event).isA<NoUsageOfKey>()
     }
 

@@ -34,10 +34,10 @@ class Game(val connections: RoomConnectionsMap,
     val allItems: Items = Items(itemsPlacementMap)
 
 
-    fun playerDo(input: Input, currentRoom: Room, currentState: State): Event {
+    fun playerDo(input: Input, eventLog: EventLog): Event {
         return actionMap.getOrElse(input.command) {
             throw Exception("Mama Mia! Undefined command in input ${input.command}")
-        }.invoke(input, currentRoom, currentState, allItems)
+        }.invoke(input, eventLog.getCurrentRoom().first, eventLog.getCurrentRoom().second, allItems)
     }
 
 }

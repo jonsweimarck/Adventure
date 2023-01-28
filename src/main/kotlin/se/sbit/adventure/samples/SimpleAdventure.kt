@@ -319,12 +319,14 @@ fun takeLamp(input: Input, currentRoom: Room, currentState: State, items: Items)
 fun main() {
     println("**************  Simple Adventure ****************")
 
+    var event: Event = NewRoomEvent("Welcome!\n", startRoom, startState, Player)
+    eventLog.add(event) //<-- Must have a starting NewRoomEvent so the game can figure out where the player starts
 
     val game = Game(connectedRooms, placementMap, actionMap, eventLog,  emptyList(), startRoom, startState)
-    var event: Event = NewRoomEvent("Welcome!\n", startRoom, startState, Player)
-    var currentRoom = startRoom
-    var currentState = startState
+
     while (event !is EndEvent){
+        var currentRoom = game.eventlog.getCurrentRoom().first
+        var currentState = game.eventlog.getCurrentRoom().second
 
         StandardInOut.showText(
             if(event is RoomEvent) {
@@ -334,12 +336,8 @@ fun main() {
             })
 
         val input:String = StandardInOut.waitForInput()
-        event = game.playerDo(Input(Interpreter.interpret(input, input2Command, ActionCommand.GibberishInput)), currentRoom, currentState)
+        event = game.playerDo(Input(Interpreter.interpret(input, input2Command, ActionCommand.GibberishInput)), game.eventlog)
         eventLog.add(event)
-        if(event is RoomEvent) {
-            currentRoom = event.newRoom
-            currentState = event.newState
-        }
 
         game.nonPlayerCharacters = game.nonPlayerCharacters.map {  Pair(it.first, EventLog.fromList(it.second.add(it.first.doAction(it.second.getCurrentRoom().first, currentRoom, currentState, eventLog))))}
     }
