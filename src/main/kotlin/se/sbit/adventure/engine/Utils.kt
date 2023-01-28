@@ -21,30 +21,31 @@ fun actionForGo(connectionsMap: RoomConnectionsMap,
                 sameRoomEventText: String = "That didn't work!"): (Input, EventLog, Items) -> Event
 {
     return fun(input, eventLog, items): Event {
+        val currentRoomAndState = eventLog.getCurrentRoomAndState()
         val currentRoom  = eventLog.getCurrentRoom()
         val currentState = eventLog.getCurrentState()
 
         // find new room
         val roomConnections = connectionsMap.getOrElse(currentRoom) {
             // Should neeeeeever happen.The room has no connections!
-            return SameRoomEvent(sameRoomEventText , currentRoom, currentState, Player)
+            return SameRoomEvent(sameRoomEventText, currentRoomAndState, Player)
         }
 
         val roomIndex = roomConnections.indexOfFirst { it.first.invoke(input, currentRoom) }
         if (roomIndex == -1) {
             // Trying to walk in an unconnected direction
-            return SameRoomEvent(sameRoomEventText , currentRoom, currentState, Player)
+            return SameRoomEvent(sameRoomEventText, currentRoomAndState, Player)
         }
         val newRoom = roomConnections[roomIndex].second
 
         val stateIndex = newRoom.states.indexOfFirst { it.first.invoke(input, currentRoom) }
         if (stateIndex == -1) {
             // No state matches!
-            return SameRoomEvent(sameRoomEventText , currentRoom, currentState, Player)
+            return SameRoomEvent(sameRoomEventText, currentRoomAndState, Player)
         }
         val newState = newRoom.states[stateIndex].second
 
-        return NewRoomEvent("", newRoom, newState, Player)
+        return NewRoomEvent("", Pair(newRoom, newState), Player)
     }
 }
 

@@ -15,9 +15,9 @@ data class State (val description: String)
 open class Event(val gameText: String, val character: Character = Player)
 open class EndEvent(gameEndText:String):Event(gameEndText)
 
-open class RoomEvent(gameText: String, val newRoom: Room, val newState: State, character: Character, ) : Event("${gameText}\n${newState.description}", character)
-class NewRoomEvent(gameText: String, newRoom: Room, newState: State, character: Character, ): RoomEvent(gameText, newRoom, newState, character)
-class SameRoomEvent(gameText: String, room: Room, state: State, character: Character, ): RoomEvent(gameText, room, state, character)
+open class RoomEvent(gameText: String, val roomAndState: Pair<Room, State>, character: Character, ) : Event("${gameText}\n${roomAndState.second.description}", character)
+class NewRoomEvent(gameText: String, newRoomAndState: Pair<Room, State>, character: Character, ): RoomEvent(gameText, newRoomAndState, character)
+class SameRoomEvent(gameText: String, newRoomAndState: Pair<Room, State>, character: Character, ): RoomEvent(gameText, newRoomAndState, character)
 
 typealias RoomConnectionsMap =  Map<Room, List<Pair<Guard, Room>>>
 

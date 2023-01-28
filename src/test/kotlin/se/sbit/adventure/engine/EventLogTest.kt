@@ -27,7 +27,7 @@ class EventLogTest {
         val roomA = Room(listOf(Pair({ _, _ -> true}, stateA)))
         val roomB = Room(listOf(Pair({ _, _ -> true}, stateB)))
 
-        val log = EventLog.fromList(listOf(NewRoomEvent("", roomA, stateA, Player)))
+        val log = EventLog.fromList(listOf(NewRoomEvent("", Pair(roomA, stateA), Player)))
         expectThat(log.getCurrentRoom()).isEqualTo(roomA)
         expectThat(log.getCurrentState()).isEqualTo(stateA)
     }
@@ -38,10 +38,10 @@ class EventLogTest {
         val stateB = State("b")
         val roomA = Room(listOf(Pair({ _, _ -> true}, stateA)))
         val roomB = Room(listOf(Pair({ _, _ -> true}, stateB)))
-        val newRoomA = NewRoomEvent("", roomA, stateA, Player)
-        val sameRoomA = SameRoomEvent("", roomA, stateA, Player)
-        val newRoomB = NewRoomEvent("", roomB, stateB, Player)
-        val sameRoomB = SameRoomEvent("", roomB, stateB, Player)
+        val newRoomA = NewRoomEvent("", Pair(roomA, stateA), Player)
+        val sameRoomA = SameRoomEvent("", Pair(roomA, stateA), Player)
+        val newRoomB = NewRoomEvent("", Pair(roomB, stateB), Player)
+        val sameRoomB = SameRoomEvent("", Pair(roomB, stateB), Player)
 
         val log = EventLog.fromList(listOf(newRoomB, sameRoomB, newRoomA, sameRoomA))
         expectThat(log.getCurrentRoom()).isEqualTo(roomA)
