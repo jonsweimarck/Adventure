@@ -21,7 +21,7 @@ class InventoryEvent(gameText: String):Event(gameText)
 fun actionForPickUpItem(itemToPickUp:ItemType, noSuchItemHereEventText: String = "That didn't work!", pickedUpEventText: String = "Picked up"): (Input, EventLog, Items) -> Event
 {
     return fun(input, eventLog, items): Event {
-        val currentRoom = eventLog.getCurrentRoom()
+        val currentRoom = eventLog.getCurrentRoom(Player)
         if (items.itemsIn(currentRoom).none { it == itemToPickUp }){
             return NoSuchItemHereEvent(noSuchItemHereEventText)
         }
@@ -44,7 +44,7 @@ fun actionForDropItem(itemToDrop:ItemType, noSuchItemToDropEventText: String = "
         if (items.carriedItems().none { it == itemToDrop }){
             return NoSuchItemToDropItemEvent(noSuchItemToDropEventText)
         }
-        items.drop(itemToDrop, eventLog.getCurrentRoom())
+        items.drop(itemToDrop, eventLog.getCurrentRoom(Player))
         return DroppedItemEvent("${droppedItemEventText} ${itemToDrop.description}.")
     }
 

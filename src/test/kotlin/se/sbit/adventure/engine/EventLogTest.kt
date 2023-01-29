@@ -28,28 +28,36 @@ class EventLogTest {
         val roomB = Room(listOf(Pair({ _, _ -> true}, stateB)))
 
         val log = EventLog.fromList(listOf(NewRoomEvent("", Pair(roomA, stateA), Player)))
-        expectThat(log.getCurrentRoom()).isEqualTo(roomA)
-        expectThat(log.getCurrentState()).isEqualTo(stateA)
+        expectThat(log.getCurrentRoom(Player)).isEqualTo(roomA)
+        expectThat(log.getCurrentState(Player)).isEqualTo(stateA)
     }
 
     @Test
-    fun `the current Room and State can be found from multiple NewRoomEvent`(){
+    fun `the current Room and State can be found from multiple NewRoomEvent from multiple Characters`(){
+
+        val miscNPC = object: NPC("my NPC"){}
+
         val stateA = State("a")
         val stateB = State("b")
         val roomA = Room(listOf(Pair({ _, _ -> true}, stateA)))
         val roomB = Room(listOf(Pair({ _, _ -> true}, stateB)))
-        val newRoomA = NewRoomEvent("", Pair(roomA, stateA), Player)
-        val sameRoomA = SameRoomEvent("", Pair(roomA, stateA), Player)
-        val newRoomB = NewRoomEvent("", Pair(roomB, stateB), Player)
-        val sameRoomB = SameRoomEvent("", Pair(roomB, stateB), Player)
+        val newRoomAplayer = NewRoomEvent("", Pair(roomA, stateA), Player)
+        val newRoomBnpc = NewRoomEvent("", Pair(roomB, stateB), miscNPC)
+        val sameRoomAplayer = SameRoomEvent("", Pair(roomA, stateA), Player)
+        val newRoomBplayer = NewRoomEvent("", Pair(roomB, stateB), Player)
+        val sameRoomBplayer = SameRoomEvent("", Pair(roomB, stateB), Player)
 
-        val log = EventLog.fromList(listOf(newRoomB, sameRoomB, newRoomA, sameRoomA))
-        expectThat(log.getCurrentRoom()).isEqualTo(roomA)
-        expectThat(log.getCurrentState()).isEqualTo(stateA)
+        val log = EventLog.fromList(listOf(newRoomBplayer, sameRoomBplayer,newRoomBnpc, newRoomAplayer, sameRoomAplayer))
+
+        expectThat(log.getCurrentRoom(Player)).isEqualTo(roomA)
+        expectThat(log.getCurrentState(Player)).isEqualTo(stateA)
+
+        expectThat(log.getCurrentRoom(miscNPC)).isEqualTo(roomB)
+        expectThat(log.getCurrentState(miscNPC)).isEqualTo(stateB)
     }
 
     @Test
     fun `an exception is thrown if not current room can be found`(){
-        expectCatching { EventLog().getCurrentRoom()}.isFailure()
+        expectCatching { EventLog().getCurrentRoom(Player)}.isFailure()
     }
 }

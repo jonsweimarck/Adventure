@@ -52,7 +52,7 @@ class RoomsAndConnectionTest {
     fun `starts in a room`() {
         val eventLog = EventLog.fromList(listOf(NewRoomEvent("", Pair(roomA, stateA), Player))) // <- simple eventlog with only the start room/state
         val game = Game(connectionsMap, eventlog = eventLog)
-        expectThat(game.eventlog.getCurrentRoom()).isEqualTo(roomA)
+        expectThat(game.eventlog.getCurrentRoom(Player)).isEqualTo(roomA)
     }
 
     @Test

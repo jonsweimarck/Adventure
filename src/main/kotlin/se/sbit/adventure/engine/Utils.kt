@@ -21,9 +21,8 @@ fun actionForGo(connectionsMap: RoomConnectionsMap,
                 sameRoomEventText: String = "That didn't work!"): (Input, EventLog, Items) -> Event
 {
     return fun(input, eventLog, items): Event {
-        val currentRoomAndState = eventLog.getCurrentRoomAndState()
-        val currentRoom  = eventLog.getCurrentRoom()
-        val currentState = eventLog.getCurrentState()
+        val currentRoomAndState = eventLog.getCurrentRoomAndState(Player)
+        val currentRoom  = currentRoomAndState.first
 
         // find new room
         val roomConnections = connectionsMap.getOrElse(currentRoom) {

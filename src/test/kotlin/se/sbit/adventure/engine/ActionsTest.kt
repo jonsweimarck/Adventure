@@ -81,7 +81,7 @@ class ActionsTest {
             return NoKeyToBeUsed;
         }
 
-        if(eventLog.getCurrentRoom() != roomA){
+        if(eventLog.getCurrentRoom(Player) != roomA){
             return NoUsageOfKey;
         }
         val currentKey = items.carriedItems().filterIsInstance<Key>().first()
