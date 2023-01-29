@@ -16,9 +16,13 @@ class EventLog {
         val lastNewRoom = events.filterIsInstance<NewRoomEvent>().last { it.character == character }
         return lastNewRoom.roomAndState
     }
-
     fun getCurrentRoom(character: Character): Room  = getCurrentRoomAndState(character).first
     fun getCurrentState(character: Character): State  = getCurrentRoomAndState(character).second
+
+    fun getNumberOfTurnsSinceEnteredCurrentRoom(character: Character): Int {
+        val currentRoom = getCurrentRoom(character)
+        return events.filterIsInstance<RoomEvent>().filter { it.character ==character }.takeLastWhile { it.roomAndState.first == currentRoom }.size
+    }
 
 
     companion object {

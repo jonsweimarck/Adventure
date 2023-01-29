@@ -7,6 +7,9 @@ enum class GoCommand: CommandType {
     GoNorth, GoEast, GoSouth, GoWest,
 }
 
+object NPCinput: CommandType
+
+
 data class Input(val command: CommandType)
 
 data class Room(val states: List<Pair<(Input, Room) ->Boolean, State>>)
@@ -26,7 +29,7 @@ class Game(val connections: RoomConnectionsMap,
            itemsPlacementMap: ItemsPlacementMap = emptyMap(),
            val actionMap: Map<CommandType, (Input, EventLog, Items) -> Event> = emptyMap(),
            val eventlog: EventLog = EventLog(),
-           var nonPlayerCharacters: List<Pair<NonPlayerCharacter, EventLog>> = emptyList()
+           val nonPlayerCharacters: Map<NPC, (EventLog)-> Event > = emptyMap()
 ){
 
     val allItems: Items = Items(itemsPlacementMap)

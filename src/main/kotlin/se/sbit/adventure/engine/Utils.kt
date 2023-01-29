@@ -49,4 +49,24 @@ fun actionForGo(connectionsMap: RoomConnectionsMap,
 }
 
 
+fun goWherePossible(connectionsMap: RoomConnectionsMap, eventLog: EventLog, character: Character): Event {
+    val currentRoomAndState = eventLog.getCurrentRoomAndState(character)
+    val currentRoom  = currentRoomAndState.first
+
+    // get a shuffled list of possible rooms. We don't care about the Guards to go to a room, but trust that we will
+    // be stopped when we try to find a State afterwards
+    val rooms = connectionsMap.getOrElse(currentRoom) {
+        return SameRoomEvent("No possible rooms to enter", currentRoomAndState, character)
+    }.map { it.second }.shuffled()
+
+    // Try to find a state in any room
+    for(room in rooms) {
+        val stateIndex = room.states.indexOfFirst { state -> state.first.invoke(Input(NPCinput), currentRoom)}
+        if(stateIndex != -1) {
+            return NewRoomEvent("${character.description} enters new Room", Pair(room, room.states[stateIndex].second), character)
+        }
+    }
+    return SameRoomEvent("No possible state to enter", currentRoomAndState, character)
+}
+
 

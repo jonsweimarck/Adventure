@@ -60,7 +60,7 @@ private val inside = Room(listOf(
     Pair(::lightIsOn, litRoom)))
 
 private val endRoom = Room(listOf(
-    Pair({_,_ -> true}, endState)))  // <-- Always true
+    Pair(::hedgeIsSawnDown, endState)))
 
 val startRoom = garden
 val startState = gardenWithHedge
@@ -222,19 +222,33 @@ val actionMap: Map<CommandType, (Input, EventLog,  Items) -> Event> = mapOf(
 //    NewRoomEvent()
 //}
 
-class gubbe: NPC("En gubbe")
+
+
+val oldMan: NPC = object: NPC("en gubbe"){}
+
+fun oldManActions(eventLog: EventLog): Event {
+    val currentRoomAndState = eventLog.getCurrentRoomAndState(oldMan)
+    if(eventLog.getNumberOfTurnsSinceEnteredCurrentRoom(oldMan) >= 2) {
+        return goWherePossible(connectedRooms, eventLog, oldMan)
+    } else {
+        return SameRoomEvent("An old man is slowly walking by", currentRoomAndState, oldMan)
+    }
+}
+
+val npcActionMap = mapOf(oldMan to ::oldManActions)
+
 
 
 fun useKey(input: Input, eventLog: EventLog, items: Items): Event {
     if(items.carriedItems().filterIsInstance<Key>().isEmpty()){
-        return NoKeyToBeUsed;
+        return NoKeyToBeUsed
     }
     val currentKey = items.carriedItems().filterIsInstance<Key>().first()
     if(currentKey is UsedKey) {
         return KeyAlreadyUsed
     }
     if(eventLog.getCurrentState(Player) != inFrontOfClosedDoor){
-        return NoUsageOfKey;
+        return NoUsageOfKey
     }
     items.replaceCarried(currentKey, UsedKey)
     return KeyUsedSuccessfully(eventLog.getCurrentRoom(Player), inFrontOfOpenDoor)
@@ -321,30 +335,39 @@ fun takeLamp(input: Input, eventLog: EventLog, items: Items): Event =
 fun main() {
     println("**************  Simple Adventure ****************")
 
-    var event: Event = NewRoomEvent("Welcome!\n", Pair(startRoom, startState), Player)
-    eventLog.add(event) //<-- Must have a starting NewRoomEvent so the game can figure out where the player starts
+    // Must have starting NewRoomEvent for both player and NPC so the game can figure out where the player starts
+    var npcEvent: Event = NewRoomEvent("NPC", Pair(startRoom, startState), oldMan)
+    var playerEvent: Event = NewRoomEvent("Welcome!\n", Pair(startRoom, startState), Player)
+    eventLog.add(npcEvent)
+    eventLog.add(playerEvent)
 
-    val game = Game(connectedRooms, placementMap, actionMap, eventLog,  emptyList())
+    val game = Game(connectedRooms, placementMap, actionMap, eventLog,  nonPlayerCharacters = npcActionMap)
 
-    while (event !is EndEvent){
+    while (playerEvent !is EndEvent){
         val currentRoom = game.eventlog.getCurrentRoom(Player)
         val currentState = game.eventlog.getCurrentState(Player)
 
         StandardInOut.showText(
-            if(event is RoomEvent) {
-                formatGameTextAndItems(event.gameText, game.allItems.itemsIn(currentRoom))
+            if(playerEvent is RoomEvent) {
+                formatGameTextAndItems(playerEvent.gameText, game.allItems.itemsIn(currentRoom))
             } else {
-                event.gameText
+                playerEvent.gameText
             })
 
-        val input:String = StandardInOut.waitForInput()
-        event = game.playerDo(Input(Interpreter.interpret(input, input2Command, ActionCommand.GibberishInput)), game.eventlog)
-        eventLog.add(event)
+        StandardInOut.showText("*********************************")
+        for(npcEntry in game.nonPlayerCharacters){
+            npcEvent = npcEntry.value.invoke(game.eventlog)
+            StandardInOut.showText("${npcEvent.character.description}: ${npcEvent.gameText}")
+            eventLog.add(npcEvent)
+        }
+        StandardInOut.showText("*********************************")
 
-        game.nonPlayerCharacters = game.nonPlayerCharacters.map {  Pair(it.first, EventLog.fromList(it.second.add(it.first.doAction(it.second.getCurrentRoom(Player), currentRoom, currentState, eventLog))))}
+        val input:String = StandardInOut.waitForInput()
+        playerEvent = game.playerDo(Input(Interpreter.interpret(input, input2Command, ActionCommand.GibberishInput)), game.eventlog)
+        eventLog.add(playerEvent)
     }
 
-    StandardInOut.showText(event.gameText)
+    StandardInOut.showText(playerEvent.gameText)
 }
 
 fun formatGameTextAndItems(gameText: String, items: List<ItemType>): String =
