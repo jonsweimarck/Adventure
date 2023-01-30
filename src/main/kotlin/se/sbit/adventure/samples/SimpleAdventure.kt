@@ -207,32 +207,20 @@ val actionMap: Map<CommandType, (Input, EventLog,  Items) -> Event> = mapOf(
     ActionCommand.Smash to {  _, _, _  -> Event("Så där gör man bara inte! Det kan räknas som skadegörelse och vara straffbart med böter eller fängelse enligt Brottbalken 12 kap. 1 §!")},
 )
 
-//fun npcNextAction(npcCurrentRoom: Room, playerCurrentRoom: Room, playerCurrentState: State, playerItems: Items, eventLog: EventLog): Event {
-//    when(npcCurrentRoom == playerCurrentRoom){
-//        true -> return NpcInPlayerRoom"(En gubbe står och tittar på dig", )
-//        false -> return npcRandomWalk(npcCurrentRoom: Room, playerCurrentRoom: Room, playerCurrentState: State, playerItems: Items, eventLog: EventLog)
-//    }
-//
-//}
-
-//val oldMan = NonPlayerCharacter("en gubbe") { npcRoom, playerRoom, playerState, eventlog ->
-//    NewRoomEvent()
-//}
-
-
 
 val oldMan: NPC = object: NPC("en gubbe"){}
 
-fun oldManActions(eventLog: EventLog): Event {
+val roomConnections = connectedRooms.entries.associate { it.key to it.value.map { pair -> pair.second } }
+fun walkRandomEverySecondTurn(eventLog: EventLog): Event {
     val currentRoomAndState = eventLog.getCurrentRoomAndState(oldMan)
     if(eventLog.getNumberOfTurnsSinceEnteredCurrentRoom(oldMan) >= 2) {
-        return goWherePossible(connectedRooms, eventLog, oldMan)
+        return goWherePossible(roomConnections, eventLog, oldMan)
     } else {
         return SameRoomEvent("An old man is slowly walking by", currentRoomAndState, oldMan)
     }
 }
 
-val npcActionMap = mapOf(oldMan to ::oldManActions)
+val npcActionMap = mapOf(oldMan to ::walkRandomEverySecondTurn)
 
 
 
@@ -351,13 +339,13 @@ fun main() {
                 playerEvent.gameText
             })
 
-//        StandardInOut.showText("*********************************")
-//        for(npcEntry in game.nonPlayerCharacters){
-//            npcEvent = npcEntry.value.invoke(game.eventlog)
-//            StandardInOut.showText("${npcEvent.character.description}: ${npcEvent.gameText}")
-//            eventLog.add(npcEvent)
-//        }
-//        StandardInOut.showText("*********************************")
+        StandardInOut.showText("*********************************")
+        for(npcEntry in game.nonPlayerCharacters){
+            npcEvent = npcEntry.value.invoke(game.eventlog)
+            StandardInOut.showText("${npcEvent.character.description}: ${npcEvent.gameText}")
+            eventLog.add(npcEvent)
+        }
+        StandardInOut.showText("*********************************")
 
         val input:String = StandardInOut.waitForInput()
         playerEvent = game.playerDo(Input(Interpreter.interpret(input, input2Command, ActionCommand.GibberishInput)), game.eventlog)
