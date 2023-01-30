@@ -18,9 +18,12 @@ data class State (val description: String)
 open class Event(val gameText: String, val character: Character = Player)
 open class EndEvent(gameEndText:String):Event(gameEndText)
 
-open class RoomEvent(gameText: String, val roomAndState: Pair<Room, State>, character: Character, ) : Event("${gameText}\n${roomAndState.second.description}", character)
+//open class RoomEvent(gameText: String, val roomAndState: Pair<Room, State>, character: Character, ) : Event("${gameText}\n${roomAndState.second.description}", character)
+open class RoomEvent(gameText: String, val roomAndState: Pair<Room, State>, character: Character, ) : Event("${gameText}", character)
 class NewRoomEvent(gameText: String, newRoomAndState: Pair<Room, State>, character: Character, ): RoomEvent(gameText, newRoomAndState, character)
 class SameRoomEvent(gameText: String, newRoomAndState: Pair<Room, State>, character: Character, ): RoomEvent(gameText, newRoomAndState, character)
+class LookAroundEvent(gameText: String, newRoomAndState: Pair<Room, State>, character: Character, ): RoomEvent(gameText, newRoomAndState, character)
+
 
 typealias RoomConnectionsMap =  Map<Room, List<Pair<RoomGuard, Room>>>
 

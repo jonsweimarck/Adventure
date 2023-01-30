@@ -58,7 +58,7 @@ fun actionForGo(connectionsMap: RoomConnectionsMap,
 }
 
 
-fun goWherePossible(roomConnections: Map<Room, List<Room>>, eventLog: EventLog, character: Character): Event {
+fun goWherePossible(roomConnections: Map<Room, List<Room>>, eventLog: EventLog, character: Character, enterRoomGameText: String): Event {
     val currentRoomAndState = eventLog.getCurrentRoomAndState(character)
     val currentRoom  = currentRoomAndState.first
 
@@ -71,7 +71,7 @@ fun goWherePossible(roomConnections: Map<Room, List<Room>>, eventLog: EventLog, 
     for(room in rooms) {
         val stateIndex = room.states.indexOfFirst { state -> state.first.invoke(Input(NPCinput), currentRoom)}
         if(stateIndex != -1) {
-            return NewRoomEvent("${character.description} enters new Room", Pair(room, room.states[stateIndex].second), character)
+            return NewRoomEvent(enterRoomGameText, Pair(room, room.states[stateIndex].second), character)
         }
     }
     return SameRoomEvent("No possible state to enter", currentRoomAndState, character)

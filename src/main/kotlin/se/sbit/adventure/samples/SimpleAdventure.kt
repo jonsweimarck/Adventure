@@ -201,7 +201,7 @@ val actionMap: Map<CommandType, (Input, EventLog,  Items) -> Event> = mapOf(
     ActionCommand.TakeChainsaw to ::takeChainsawOrDie,
     ActionCommand.DropChainsaw to actionForDropItem(Chainsaw, "Du har ingen sådan att släppa!", "Du släpper"),
     ActionCommand.SawDownHedge to ::sawDownHedge,
-    ActionCommand.LookAround to { _, eventLog, _  -> SameRoomEvent("Du tittar dig omkring.", eventLog.getCurrentRoomAndState(Player), Player)},
+    ActionCommand.LookAround to { _, eventLog, _  -> LookAroundEvent("Du tittar dig omkring.", eventLog.getCurrentRoomAndState(Player), Player)},
     ActionCommand.Inventory to goActionForInventory("Du bär inte på något.", "Du bär på"),
     ActionCommand.Dance to { _, _, _  -> Event("Dance, dance, dance!")},
     ActionCommand.Smash to {  _, _, _  -> Event("Så där gör man bara inte! Det kan räknas som skadegörelse och vara straffbart med böter eller fängelse enligt Brottbalken 12 kap. 1 §!")},
@@ -214,9 +214,9 @@ val roomConnections = connectedRooms.entries.associate { it.key to it.value.map 
 fun walkRandomEverySecondTurn(eventLog: EventLog): Event {
     val currentRoomAndState = eventLog.getCurrentRoomAndState(oldMan)
     if(eventLog.getNumberOfTurnsSinceEnteredCurrentRoom(oldMan) >= 2) {
-        return goWherePossible(roomConnections, eventLog, oldMan)
+        return goWherePossible(roomConnections, eventLog, oldMan, "En gammal gubbe vandrar långsamt förbi.")
     } else {
-        return SameRoomEvent("An old man is slowly walking by", currentRoomAndState, oldMan)
+        return SameRoomEvent("Gubben fortsätter att gå långsam.", currentRoomAndState, oldMan)
     }
 }
 
@@ -329,23 +329,25 @@ fun main() {
     val game = Game(connectedRooms, placementMap, actionMap, eventLog,  nonPlayerCharacters = npcActionMap)
 
     while (playerEvent !is EndEvent){
-        val currentRoom = game.eventlog.getCurrentRoom(Player)
-        val currentState = game.eventlog.getCurrentState(Player)
+        val currentRoomAndState = game.eventlog.getCurrentRoomAndState(Player)
+        val currentRoom = currentRoomAndState.first
 
         StandardInOut.showText(
-            if(playerEvent is RoomEvent) {
-                formatGameTextAndItems(playerEvent.gameText, game.allItems.itemsIn(currentRoom))
-            } else {
-                playerEvent.gameText
-            })
+            when(playerEvent){
+                is NewRoomEvent, is LookAroundEvent -> formatGameTextAndItems("${playerEvent.gameText}\n${(playerEvent as RoomEvent).roomAndState.second.description}", game.allItems.itemsIn(currentRoom))
+                is SameRoomEvent ->formatGameTextAndItems(playerEvent.gameText, game.allItems.itemsIn(currentRoom))
+                else -> playerEvent.gameText
+            }
+        )
 
-        StandardInOut.showText("*********************************")
         for(npcEntry in game.nonPlayerCharacters){
             npcEvent = npcEntry.value.invoke(game.eventlog)
-            StandardInOut.showText("${npcEvent.character.description}: ${npcEvent.gameText}")
+            when(npcEvent){
+                is NewRoomEvent -> if((npcEvent as RoomEvent).roomAndState == currentRoomAndState) { StandardInOut.showText("** ${npcEvent.gameText}")}
+                is SameRoomEvent -> if((npcEvent as RoomEvent).roomAndState == currentRoomAndState) { StandardInOut.showText("** ${npcEvent.gameText}")}
+            }
             eventLog.add(npcEvent)
         }
-        StandardInOut.showText("*********************************")
 
         val input:String = StandardInOut.waitForInput()
         playerEvent = game.playerDo(Input(Interpreter.interpret(input, input2Command, ActionCommand.GibberishInput)), game.eventlog)
