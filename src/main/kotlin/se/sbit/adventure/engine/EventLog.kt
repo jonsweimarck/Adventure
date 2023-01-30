@@ -13,7 +13,7 @@ class EventLog {
 
 
     fun getCurrentRoomAndState(character: Character): Pair<Room, State> {
-        val lastNewRoom = events.filterIsInstance<NewRoomEvent>().last { it.character == character }
+        val lastNewRoom = events.filterIsInstance<RoomEvent>().last { it.character == character }
         return lastNewRoom.roomAndState
     }
     fun getCurrentRoom(character: Character): Room  = getCurrentRoomAndState(character).first

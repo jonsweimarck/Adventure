@@ -22,7 +22,7 @@ open class RoomEvent(gameText: String, val roomAndState: Pair<Room, State>, char
 class NewRoomEvent(gameText: String, newRoomAndState: Pair<Room, State>, character: Character, ): RoomEvent(gameText, newRoomAndState, character)
 class SameRoomEvent(gameText: String, newRoomAndState: Pair<Room, State>, character: Character, ): RoomEvent(gameText, newRoomAndState, character)
 
-typealias RoomConnectionsMap =  Map<Room, List<Pair<Guard, Room>>>
+typealias RoomConnectionsMap =  Map<Room, List<Pair<RoomGuard, Room>>>
 
 
 class Game(val connections: RoomConnectionsMap,

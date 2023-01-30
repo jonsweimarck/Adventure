@@ -3,6 +3,7 @@ package se.sbit.adventure.samples
 import se.sbit.adventure.engine.*
 
 
+// *********************  Rooms and what States each room can be in ***********************
 private val gardenWithHedge = State(
     """
         |Du står på en gräsmatta i en villaträdgård. 
@@ -46,6 +47,14 @@ private val endState = State(
         |Livet ligger framför dig!
     """.trimMargin())
 
+val eventLog = EventLog()
+
+fun doorIsOpened(input: Input, room: Room): Boolean = ! doorIsClosed(input, room)
+fun doorIsClosed(input: Input, room: Room): Boolean = eventLog.log().filterIsInstance<KeyUsedSuccessfully>().isEmpty()
+fun lightIsOn(input: Input, room: Room): Boolean = eventLog.log().filterIsInstance<SwitchedLightOnEvent>().size > eventLog.log().filterIsInstance<SwitchedLightOffEvent>().size
+fun lightIsOff(input: Input, room: Room): Boolean = ! lightIsOn(input, room)
+fun hedgeIsNotSawnDown(input: Input, room: Room): Boolean = eventLog.log().filterIsInstance<HedgeSawnDownEvent>().isEmpty()
+fun hedgeIsSawnDown(input: Input, room: Room): Boolean = ! hedgeIsNotSawnDown(input, room)
 
 private val garden = Room(listOf(
     Pair(::hedgeIsNotSawnDown, gardenWithHedge),
@@ -56,8 +65,8 @@ private val inFrontOfDooor = Room(listOf(
     Pair(::doorIsOpened, inFrontOfOpenDoor)))
 
 private val inside = Room(listOf(
-    Pair(::lightIsOff, darkRoom),
-    Pair(::lightIsOn, litRoom)))
+    Pair(::doorIsOpened and ::lightIsOff, darkRoom),
+    Pair(::doorIsOpened and ::lightIsOn, litRoom)))
 
 private val endRoom = Room(listOf(
     Pair(::hedgeIsSawnDown, endState)))
@@ -65,35 +74,23 @@ private val endRoom = Room(listOf(
 val startRoom = garden
 val startState = gardenWithHedge
 
-
+// **************** How the Room are connected ******************
 private val connectedRooms = mapOf(
     garden to listOf(
         Pair(south, inFrontOfDooor),
-        Pair(north and ::hedgeIsSawnDown, endRoom)),
+        Pair(north, endRoom)),
     inFrontOfDooor to listOf(
         Pair(north, garden),
-        Pair(::enterRoom and ::doorIsOpened, inside),
-        Pair(south and ::doorIsOpened, inside)),
+        Pair(south or ::enterRoom, inside)),
     inside to listOf(
-        Pair(::exitRoom, inFrontOfDooor),
-        Pair(north, inFrontOfDooor)),
+        Pair(north or ::exitRoom, inFrontOfDooor)),
 )
+fun enterRoom(input: Input): Boolean = input.command == ActionCommand.EnterHouse
+fun exitRoom(input: Input): Boolean = input.command == ActionCommand.ExitHouse
 
 
 
-val eventLog = EventLog()
-
-fun doorIsOpened(input: Input, room: Room): Boolean = ! doorIsClosed(input, room)
-fun doorIsClosed(input: Input, room: Room): Boolean = eventLog.log().filterIsInstance<KeyUsedSuccessfully>().isEmpty()
-fun enterRoom(input: Input, room: Room): Boolean = input.command == ActionCommand.EnterHouse
-fun exitRoom(input: Input, room: Room): Boolean = input.command == ActionCommand.ExitHouse
-fun lightIsOn(input: Input, room: Room): Boolean = eventLog.log().filterIsInstance<SwitchedLightOnEvent>().size > eventLog.log().filterIsInstance<SwitchedLightOffEvent>().size
-fun lightIsOff(input: Input, room: Room): Boolean = ! lightIsOn(input, room)
-fun hedgeIsNotSawnDown(input: Input, room: Room): Boolean = eventLog.log().filterIsInstance<HedgeSawnDownEvent>().isEmpty()
-fun hedgeIsSawnDown(input: Input, room: Room): Boolean = ! hedgeIsNotSawnDown(input, room)
-
-
-// All Items, as well as where they are placed, and in what rooms they can be used
+// All Items, as well as where they are placed
 sealed class MiscItems(override val description: String): ItemType
 object Receipt: MiscItems("ett kvitto")
 
@@ -354,13 +351,13 @@ fun main() {
                 playerEvent.gameText
             })
 
-        StandardInOut.showText("*********************************")
-        for(npcEntry in game.nonPlayerCharacters){
-            npcEvent = npcEntry.value.invoke(game.eventlog)
-            StandardInOut.showText("${npcEvent.character.description}: ${npcEvent.gameText}")
-            eventLog.add(npcEvent)
-        }
-        StandardInOut.showText("*********************************")
+//        StandardInOut.showText("*********************************")
+//        for(npcEntry in game.nonPlayerCharacters){
+//            npcEvent = npcEntry.value.invoke(game.eventlog)
+//            StandardInOut.showText("${npcEvent.character.description}: ${npcEvent.gameText}")
+//            eventLog.add(npcEvent)
+//        }
+//        StandardInOut.showText("*********************************")
 
         val input:String = StandardInOut.waitForInput()
         playerEvent = game.playerDo(Input(Interpreter.interpret(input, input2Command, ActionCommand.GibberishInput)), game.eventlog)

@@ -1,19 +1,28 @@
 package se.sbit.adventure.engine
 
 
-typealias Guard = (Input, Room) -> Boolean
+typealias RoomGuard = (Input) -> Boolean
+typealias StateGuard = (Input, Room) -> Boolean
 
-val north: Guard = { input, _ -> (input.command == GoCommand.GoNorth)}
-val east: Guard = { input, _ -> (input.command == GoCommand.GoEast)}
-val south: Guard = { input, _ -> (input.command == GoCommand.GoSouth)}
-val west: Guard = { input, _ -> (input.command == GoCommand.GoWest)}
+val north: RoomGuard = { input -> (input.command == GoCommand.GoNorth)}
+val east: RoomGuard = { input -> (input.command == GoCommand.GoEast)}
+val south: RoomGuard = { input -> (input.command == GoCommand.GoSouth)}
+val west: RoomGuard = { input -> (input.command == GoCommand.GoWest)}
+
+infix fun RoomGuard.and(g2: RoomGuard): RoomGuard {
+    return {input -> this.invoke(input) && g2(input)}
+}
+
+infix fun RoomGuard.or(g2: RoomGuard): RoomGuard {
+    return {input -> this.invoke(input) || g2(input)}
+}
 
 
-infix fun Guard.and(g2: Guard): Guard {
+infix fun StateGuard.and(g2: StateGuard): StateGuard {
     return {input, room -> this.invoke(input, room) && g2(input, room)}
 }
 
-infix fun Guard.or(g2: Guard): Guard {
+infix fun StateGuard.or(g2: StateGuard): StateGuard {
     return {input, room -> this.invoke(input, room) || g2(input, room)}
 }
 
@@ -30,7 +39,7 @@ fun actionForGo(connectionsMap: RoomConnectionsMap,
             return SameRoomEvent(sameRoomEventText, currentRoomAndState, Player)
         }
 
-        val roomIndex = roomConnections.indexOfFirst { it.first.invoke(input, currentRoom) }
+        val roomIndex = roomConnections.indexOfFirst { it.first.invoke(input) }
         if (roomIndex == -1) {
             // Trying to walk in an unconnected direction
             return SameRoomEvent(sameRoomEventText, currentRoomAndState, Player)
