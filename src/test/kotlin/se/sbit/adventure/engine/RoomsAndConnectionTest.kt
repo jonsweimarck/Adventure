@@ -1,11 +1,13 @@
 package se.sbit.adventure.engine
 
 import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import se.sbit.adventure.engine.*
 import strikt.api.expectThat
 import strikt.assertions.isA
 import strikt.assertions.isEqualTo
+import strikt.assertions.isGreaterThan
 
 /**
  * Note: To see the test names when running in IDE and not only in Gradle HTML report,
@@ -96,5 +98,44 @@ class RoomsAndConnectionTest {
         val goNorthEvent = game.playerDo(Input(GoCommand.GoNorth), game.eventlog)
         expectThat(goNorthEvent).isA<SameRoomEvent>()
         expectThat((goNorthEvent as SameRoomEvent).roomAndState.first ).isEqualTo(roomA)
+    }
+
+    @Nested()
+    @DisplayName("... and an NPC:")
+    inner class NpcRoomsAndConnectionsTest{
+
+        @Test
+        fun `can randomly chose a connected room`(){
+            val alwaysPass = { _: Input, _: Room -> true}
+            val alwaysStop = { _: Input, _: Room -> false}
+
+            val stateA = State("a")
+            val stateB = State("b")
+            val stateC = State("c")
+            val stateD = State("d")
+            val roomA = Room(listOf(Pair(alwaysPass, stateA)))
+            val roomB = Room(listOf(Pair(alwaysPass, stateB)))
+            val roomC = Room(listOf(Pair(alwaysPass, stateC)))
+            val roomD = Room(listOf(Pair(alwaysStop, stateD)))
+
+            val roomMap = mapOf (roomA to listOf(roomB, roomC, roomD))
+            val myNPC: NPC = object: NPC("an NPC"){}
+            val eventLog = EventLog.fromList(listOf( NewRoomEvent("", Pair(roomA, stateA), myNPC))) // <- start in roomA, stateA
+
+            var resultingEvents = emptyList<Event>()
+
+            (1..100).forEach(){
+                resultingEvents = resultingEvents.plus(goWherePossible(roomMap, eventLog, myNPC, "enteringNewRoomText" ))
+            }
+
+            val numberOfRoomBEvents = resultingEvents.filter { (it as RoomEvent).roomAndState.first==roomB }.size
+            val numberOfRoomCEvents = resultingEvents.filter { (it as RoomEvent).roomAndState.first==roomC }.size
+            val numberOfRoomDEvents = resultingEvents.filter { (it as RoomEvent).roomAndState.first==roomD }.size
+
+            expectThat(numberOfRoomBEvents).isGreaterThan(0)
+            expectThat(numberOfRoomCEvents).isGreaterThan(0)
+            expectThat(numberOfRoomDEvents).isEqualTo(0)
+            expectThat(numberOfRoomBEvents + numberOfRoomCEvents).isEqualTo(100)
+        }
     }
 }
