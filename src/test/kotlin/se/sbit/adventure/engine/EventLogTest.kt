@@ -34,7 +34,16 @@ class EventLogTest {
     @Test
     fun `the current Room and State can be found from multiple NewRoomEvent from multiple Characters`(){
 
-        val miscNPC = object: NPC("my NPC"){}
+        val miscNPC = object: NPC("my NPC"){
+            override fun doAction(eventlog: EventLog): Event {
+                TODO("Not yet implemented")
+            }
+
+            override fun getGameText(eventlog: EventLog): String {
+                TODO("Not yet implemented")
+            }
+
+        }
 
         val stateA = State("a")
         val stateB = State("b")
@@ -64,7 +73,7 @@ class EventLogTest {
 
         val newRoomBplayer = NewRoomEvent("", Pair(roomB, stateB), Player)
         val newRoomAplayer = NewRoomEvent("", Pair(roomA, stateA), Player)
-        val newRoomAnpc = NewRoomEvent("", Pair(roomA, stateA), object: NPC("my NPC"){})
+        val newRoomAnpc = NewRoomEvent("", Pair(roomA, stateA), getDummyNpc())
         val sameRoomAplayer = SameRoomEvent("", Pair(roomA, stateA), Player)
 
         val log = EventLog.fromList(listOf(newRoomBplayer, newRoomAplayer, newRoomAnpc, sameRoomAplayer))
@@ -76,4 +85,75 @@ class EventLogTest {
     fun `an exception is thrown if not current room can be found`(){
         expectCatching { EventLog().getCurrentRoom(Player)}.isFailure()
     }
+
+    @Test
+    fun `the number of concurrent turns in same room is zero if not in same room anymore`(){
+
+        val miscNPC = getDummyNpc()
+        val stateA = State("a")
+        val stateB = State("b")
+        val roomA = Room(listOf(Pair({ _, _ -> true}, stateA)))
+        val roomB = Room(listOf(Pair({ _, _ -> true}, stateB)))
+
+        val newRoomAplayer = NewRoomEvent("", Pair(roomA, stateA), Player)
+        val newRoomBnpc = NewRoomEvent("", Pair(roomB, stateB), miscNPC)
+        val newRoomBplayer = NewRoomEvent("", Pair(roomB, stateB), Player)
+
+        val log = EventLog.fromList(listOf(newRoomBplayer, newRoomBnpc,newRoomAplayer))
+
+        expectThat(log.getNumberOfOfTurnsStillInSameRoom(Player, miscNPC)).isEqualTo(0)
+
+    }
+
+    @Test
+    fun `the number of concurrent turns in same room is 1 if only just entered the same room`(){
+
+        val miscNPC = getDummyNpc()
+        val stateA = State("a")
+        val stateB = State("b")
+        val roomA = Room(listOf(Pair({ _, _ -> true}, stateA)))
+        val roomB = Room(listOf(Pair({ _, _ -> true}, stateB)))
+
+        val newRoomAplayer = NewRoomEvent("", Pair(roomA, stateA), Player)
+        val newRoomAnpc = NewRoomEvent("", Pair(roomA, stateA), miscNPC)
+        val newRoomBnpc = NewRoomEvent("", Pair(roomB, stateB), miscNPC)
+        val newRoomBplayer = NewRoomEvent("", Pair(roomB, stateB), Player)
+
+        val log = EventLog.fromList(listOf(newRoomBplayer, newRoomBnpc, newRoomAplayer, newRoomAnpc))
+
+        expectThat(log.getNumberOfOfTurnsStillInSameRoom(Player, miscNPC)).isEqualTo(1)
+    }
+
+    @Test
+    fun `the number of concurrent turns in same room is correct if even when room not entered the same turn`(){
+
+        val miscNPC = getDummyNpc()
+        val stateA = State("a")
+        val stateB = State("b")
+        val roomA = Room(listOf(Pair({ _, _ -> true}, stateA)))
+        val roomB = Room(listOf(Pair({ _, _ -> true}, stateB)))
+
+        val newRoomAplayer = NewRoomEvent("", Pair(roomA, stateA), Player)
+        val newRoomAnpc = NewRoomEvent("", Pair(roomA, stateA), miscNPC)
+        val sameRoomAplayer = SameRoomEvent("", Pair(roomA, stateA), Player)
+        val sameRoomAnpc = SameRoomEvent("", Pair(roomA, stateA), miscNPC)
+        val newRoomBnpc = NewRoomEvent("", Pair(roomB, stateB), miscNPC)
+
+        val log = EventLog.fromList(listOf(newRoomAplayer, newRoomBnpc, sameRoomAplayer, newRoomAnpc, sameRoomAplayer, sameRoomAnpc))
+
+        expectThat(log.getNumberOfOfTurnsStillInSameRoom(Player, miscNPC)).isEqualTo(2)
+    }
+
+    private fun getDummyNpc(): Character =
+        object: NPC("my NPC"){
+            override fun doAction(eventlog: EventLog): Event {
+                TODO("Not yet implemented")
+            }
+
+            override fun getGameText(eventlog: EventLog): String {
+                TODO("Not yet implemented")
+            }
+
+    }
+
 }

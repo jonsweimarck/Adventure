@@ -24,6 +24,17 @@ class EventLog {
         return events.filterIsInstance<RoomEvent>().filter { it.character ==character }.takeLastWhile { it.roomAndState.first == currentRoom }.size
     }
 
+    fun getNumberOfOfTurnsStillInSameRoom(character1: Character, character2: Character): Int =
+        when(isInSameRoom(character1, character2)){
+            true -> minOf(getNumberOfTurnsSinceEnteredCurrentRoom(character1), getNumberOfTurnsSinceEnteredCurrentRoom(character2))
+            false -> 0
+        }
+
+
+
+    fun isInSameRoom(character1: Character, character2: Character): Boolean =
+        getCurrentRoom(character1) ==  getCurrentRoom(character2)
+
 
     companion object {
         fun fromList(initialEvents: List<Event>): EventLog {

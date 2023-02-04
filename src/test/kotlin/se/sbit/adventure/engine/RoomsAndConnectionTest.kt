@@ -104,8 +104,22 @@ class RoomsAndConnectionTest {
     @DisplayName("... and an NPC:")
     inner class NpcRoomsAndConnectionsTest{
 
+        private fun getDummyNpc(): NPC =
+            object: NPC("my NPC"){
+                override fun doAction(eventlog: EventLog): Event {
+                    TODO("Not yet implemented")
+                }
+
+                override fun getGameText(eventlog: EventLog): String {
+                    TODO("Not yet implemented")
+                }
+
+            }
+
         @Test
         fun `can randomly chose a connected room`(){
+
+            // Setting up RoomA connected to B, C, D. But roomD can't actually be chossen because it's only State's StateGuard can not be passed
             val alwaysPass = { _: Input, _: Room -> true}
             val alwaysStop = { _: Input, _: Room -> false}
 
@@ -119,11 +133,12 @@ class RoomsAndConnectionTest {
             val roomD = Room(listOf(Pair(alwaysStop, stateD)))
 
             val roomMap = mapOf (roomA to listOf(roomB, roomC, roomD))
-            val myNPC: NPC = object: NPC("an NPC"){}
+            val myNPC: NPC = getDummyNpc()
             val eventLog = EventLog.fromList(listOf( NewRoomEvent("", Pair(roomA, stateA), myNPC))) // <- start in roomA, stateA
 
             var resultingEvents = emptyList<Event>()
 
+            // Find a new Room from roomA 100 times
             (1..100).forEach(){
                 resultingEvents = resultingEvents.plus(goWherePossible(roomMap, eventLog, myNPC, "enteringNewRoomText" ))
             }
@@ -138,4 +153,5 @@ class RoomsAndConnectionTest {
             expectThat(numberOfRoomBEvents + numberOfRoomCEvents).isEqualTo(100)
         }
     }
+
 }

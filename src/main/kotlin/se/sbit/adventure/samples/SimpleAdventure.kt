@@ -208,20 +208,29 @@ val actionMap: Map<CommandType, (Input, EventLog,  Items) -> Event> = mapOf(
 )
 
 
-val oldMan: NPC = object: NPC("en gubbe"){}
 
 val roomConnections = connectedRooms.entries.associate { it.key to it.value.map { pair -> pair.second } }
-fun walkRandomEverySecondTurn(eventLog: EventLog): Event {
-    val currentRoomAndState = eventLog.getCurrentRoomAndState(oldMan)
-    if(eventLog.getNumberOfTurnsSinceEnteredCurrentRoom(oldMan) >= 2) {
-        return goWherePossible(roomConnections, eventLog, oldMan, "En gammal gubbe vandrar långsamt förbi.")
-    } else {
-        return SameRoomEvent("Gubben fortsätter att gå långsam.", currentRoomAndState, oldMan)
+val oldMan: NPC = object: NPC("en gubbe") {
+
+    override fun doAction(evlog: EventLog): Event {
+        val currentRoomAndState = evlog.getCurrentRoomAndState(this)
+        if(evlog.getNumberOfTurnsSinceEnteredCurrentRoom(this) >= 2) {
+            return goWherePossible(roomConnections, evlog, this, "En gammal gubbe vandrar långsamt förbi.")
+        } else {
+            return SameRoomEvent("Gubben fortsätter att gå långsam.", currentRoomAndState, this)
+        }
     }
+
+    override fun getGameText(evLog: EventLog): String =
+        when(eventLog.getNumberOfOfTurnsStillInSameRoom(Player, this)) {
+            0 -> ""
+            1 -> "En gammal gubbe vandrar långsamt förbi."
+            else -> "Den gamla gubben är fortfarande inom synhåll."
+
+        }
 }
 
-val npcActionMap = mapOf(oldMan to ::walkRandomEverySecondTurn)
-
+val npcs = listOf(oldMan)
 
 
 fun useKey(input: Input, eventLog: EventLog, items: Items): Event {
@@ -326,7 +335,9 @@ fun main() {
     eventLog.add(npcEvent)
     eventLog.add(playerEvent)
 
-    val game = Game(connectedRooms, placementMap, actionMap, eventLog,  nonPlayerCharacters = npcActionMap)
+    val game = Game(connectedRooms, placementMap, actionMap, eventLog,  nonPlayerCharacters = npcs)
+
+    print("${eventLog.log()}\n")
 
     while (playerEvent !is EndEvent){
         val currentRoomAndState = game.eventlog.getCurrentRoomAndState(Player)
@@ -339,19 +350,19 @@ fun main() {
                 else -> playerEvent.gameText
             }
         )
-
-        for(npcEntry in game.nonPlayerCharacters){
-            npcEvent = npcEntry.value.invoke(game.eventlog)
-            when(npcEvent){
-                is NewRoomEvent -> if((npcEvent as RoomEvent).roomAndState == currentRoomAndState) { StandardInOut.showText("** ${npcEvent.gameText}")}
-                is SameRoomEvent -> if((npcEvent as RoomEvent).roomAndState == currentRoomAndState) { StandardInOut.showText("** ${npcEvent.gameText}")}
-            }
-            eventLog.add(npcEvent)
+        val npcTotalGameTexts = game.nonPlayerCharacters.joinToString("\n") { it.getGameText(game.eventlog) }
+        if(npcTotalGameTexts.isNotEmpty()){
+            StandardInOut.showText(npcTotalGameTexts)
         }
+
 
         val input:String = StandardInOut.waitForInput()
         playerEvent = game.playerDo(Input(Interpreter.interpret(input, input2Command, ActionCommand.GibberishInput)), game.eventlog)
         eventLog.add(playerEvent)
+        print("${eventLog.log()}\n")
+
+         game.nonPlayerCharacters.forEach{ eventLog.add(it.doAction(game.eventlog)) }
+        print("${eventLog.log()}\n")
     }
 
     StandardInOut.showText(playerEvent.gameText)

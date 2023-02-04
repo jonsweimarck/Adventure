@@ -32,7 +32,7 @@ class Game(val connections: RoomConnectionsMap,
            itemsPlacementMap: ItemsPlacementMap = emptyMap(),
            val actionMap: Map<CommandType, (Input, EventLog, Items) -> Event> = emptyMap(),
            val eventlog: EventLog = EventLog(),
-           val nonPlayerCharacters: Map<NPC, (EventLog)-> Event > = emptyMap()
+           val nonPlayerCharacters: List<NPC> = emptyList()
 ){
 
     val allItems: Items = Items(itemsPlacementMap)
