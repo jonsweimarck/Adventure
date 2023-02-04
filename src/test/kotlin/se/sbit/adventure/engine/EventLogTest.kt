@@ -65,7 +65,7 @@ class EventLogTest {
     }
 
     @Test
-    fun `the number of turns since entered the current room can be found`(){
+    fun `the number of turns since entered the current room can be found `(){
         val stateA = State("a")
         val stateB = State("b")
         val roomA = Room(listOf(Pair({ _, _ -> true}, stateA)))
@@ -75,9 +75,10 @@ class EventLogTest {
         val newRoomAplayer = NewRoomEvent("", Pair(roomA, stateA), Player)
         val newRoomAnpc = NewRoomEvent("", Pair(roomA, stateA), getDummyNpc())
         val sameRoomAplayer = SameRoomEvent("", Pair(roomA, stateA), Player)
+        val notARoomEvent = Event("something", Player) // <-- staying in the currentRoom without explicity stating it
 
-        val log = EventLog.fromList(listOf(newRoomBplayer, newRoomAplayer, newRoomAnpc, sameRoomAplayer))
-        expectThat(log.getNumberOfTurnsSinceEnteredCurrentRoom(Player)).isEqualTo(2)
+        val log = EventLog.fromList(listOf(newRoomBplayer, newRoomAplayer, notARoomEvent, newRoomAnpc, sameRoomAplayer))
+        expectThat(log.getNumberOfTurnsSinceEnteredCurrentRoom(Player)).isEqualTo(3)
     }
 
 

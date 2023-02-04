@@ -19,10 +19,9 @@ class EventLog {
     fun getCurrentRoom(character: Character): Room  = getCurrentRoomAndState(character).first
     fun getCurrentState(character: Character): State  = getCurrentRoomAndState(character).second
 
-    fun getNumberOfTurnsSinceEnteredCurrentRoom(character: Character): Int {
-        val currentRoom = getCurrentRoom(character)
-        return events.filterIsInstance<RoomEvent>().filter { it.character ==character }.takeLastWhile { it.roomAndState.first == currentRoom }.size
-    }
+    fun getNumberOfTurnsSinceEnteredCurrentRoom(character: Character): Int =
+        events.filter { it.character == character }.takeLastWhile { it !is NewRoomEvent}.size +1
+
 
     fun getNumberOfOfTurnsStillInSameRoom(character1: Character, character2: Character): Int =
         when(isInSameRoom(character1, character2)){
