@@ -48,12 +48,15 @@ class PickUpAndDropTest {
 
     @Test
     fun `can pick up item in current room`() {
-        val currentRoom = roomA
-        val game = Game(connectedRooms, itemMap,)
+        val eventLog = EventLog.fromList(listOf(NewRoomEvent("start room", Pair(roomA, stateA), Player)))
+        val game = Game(connectedRooms, itemMap, eventlog = eventLog)
 
-        expectThat(game.allItems.carriedItems()).containsExactly(Bottle)
-        game.allItems.pickUp(Sword, currentRoom)
-        expectThat(game.allItems.carriedItems()).containsExactlyInAnyOrder(Bottle, Sword)
+        expectThat(carriedItems(game.eventlog)).containsExactly(Bottle)
+
+        val resultingEvent = actionForPickUpItem(Sword).invoke(Input(object: CommandType{}), game.eventlog, game.allItems)
+        game.eventlog.add(resultingEvent)
+
+        expectThat(carriedItems(game.eventlog)).containsExactlyInAnyOrder(Bottle, Sword)
     }
 
 
@@ -73,11 +76,16 @@ class PickUpAndDropTest {
 
     @Test
     fun `can drop carried item`() {
-        val game = Game(connectedRooms, itemMap)
+        val eventLog = EventLog.fromList(listOf(NewRoomEvent("start room", Pair(roomA, stateA), Player)))
 
-        expectThat(game.allItems.carriedItems()).containsExactly(Bottle)
-        game.allItems.drop(Bottle, roomA)
-        expectThat(game.allItems.carriedItems()).isEmpty()
+        val game = Game(connectedRooms, itemMap, eventlog = eventLog)
+
+        expectThat(carriedItems(game.eventlog)).containsExactly(Bottle)
+
+        val resultingEvent = actionForDropItem(Bottle).invoke(Input(object: CommandType{}), game.eventlog, game.allItems)
+        game.eventlog.add(resultingEvent)
+
+        expectThat(carriedItems(game.eventlog)).isEmpty()
     }
 
     @Test

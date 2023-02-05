@@ -234,17 +234,17 @@ val npcs = listOf(oldMan)
 
 
 fun useKey(input: Input, eventLog: EventLog, items: Items): Event {
-    if(items.carriedItems().filterIsInstance<Key>().isEmpty()){
+    if(carriedItems(eventLog).filterIsInstance<Key>().isEmpty()){
         return NoKeyToBeUsed
     }
-    val currentKey = items.carriedItems().filterIsInstance<Key>().first()
+    val currentKey = carriedItems(eventLog).filterIsInstance<Key>().first()
     if(currentKey is UsedKey) {
         return KeyAlreadyUsed
     }
     if(eventLog.getCurrentState(Player) != inFrontOfClosedDoor){
         return NoUsageOfKey
     }
-    items.replaceCarried(currentKey, UsedKey)
+    items.replaceCarried(currentKey, UsedKey, eventLog)
     return KeyUsedSuccessfully(eventLog.getCurrentRoom(Player), inFrontOfOpenDoor)
 }
 
@@ -260,15 +260,15 @@ fun takeAnyKey(input: Input, eventLog: EventLog, items: Items): Event {
 }
 
 fun dropAnyKey(input: Input, eventLog: EventLog, items: Items): Event =
-    if (items.carriedItems().filterIsInstance<Key>().isEmpty()) {
+    if (carriedItems(eventLog).filterIsInstance<Key>().isEmpty()) {
         NoSuchItemToDropItemEvent("Du har ingen sådan att släppa!")
     } else {
-        val key = items.carriedItems().filterIsInstance<Key>().first()
+        val key = carriedItems(eventLog).filterIsInstance<Key>().first()
         items.drop(key, eventLog.getCurrentRoom(Player))
-        DroppedItemEvent("Du släpper en nyckel", Player, key)
+        DroppedItemEvent("Du släpper en nyckel", Player, key, eventLog.getCurrentRoom(Player))
     }
 fun examineKey(input: Input, eventLog: EventLog, items: Items): Event =
-    if (items.carriedItems().contains(UnusedKey)) {
+    if (carriedItems(eventLog).contains(UnusedKey)) {
         actionForExamineItem(UnusedKey, "En helt vanlig nyckel", "Då får du först plocka upp det igen!").invoke(input,eventLog, items)
     } else {
         actionForExamineItem(UsedKey, "En helt vanlig nyckel", "Då får du först plocka upp det igen!").invoke(input,eventLog, items)
@@ -309,7 +309,7 @@ fun takeChainsawOrDie(input: Input, eventLog: EventLog, items: Items): Event =
     }
 
 fun sawDownHedge(input: Input, eventLog: EventLog, items: Items): Event =
-    if(items.carriedItems().contains(Chainsaw)){
+    if(carriedItems(eventLog).contains(Chainsaw)){
         when(eventLog.getCurrentState(Player)){
             gardenWithSawnDownHedge -> SameRoomEvent("De kvarvarande häckarna går inte att såga ner av någon mystisk anledning.", eventLog.getCurrentRoomAndState(Player), Player)
             gardenWithHedge -> HedgeSawnDownEvent()
