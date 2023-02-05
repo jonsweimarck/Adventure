@@ -254,7 +254,7 @@ fun takeAnyKey(input: Input, eventLog: EventLog, items: Items): Event {
         return NoSuchItemHereEvent("Går inte att ta upp en sådan här!")
     } else {
         val key = items.itemsIn(currentRoom).filterIsInstance<Key>().first()
-        items.pickUp(key, currentRoom)
+        actionForPickUpItem(key).invoke(input, eventLog, items)
         return PickedUpItemEvent("Du tar upp en nyckel", Player, key)
     }
 }
@@ -264,7 +264,7 @@ fun dropAnyKey(input: Input, eventLog: EventLog, items: Items): Event =
         NoSuchItemToDropItemEvent("Du har ingen sådan att släppa!")
     } else {
         val key = carriedItems(eventLog).filterIsInstance<Key>().first()
-        items.drop(key, eventLog.getCurrentRoom(Player))
+        actionForDropItem(key).invoke(input, eventLog, items)
         DroppedItemEvent("Du släpper en nyckel", Player, key, eventLog.getCurrentRoom(Player))
     }
 fun examineKey(input: Input, eventLog: EventLog, items: Items): Event =

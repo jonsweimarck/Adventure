@@ -3,7 +3,6 @@ package se.sbit.adventure.engine
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import se.sbit.adventure.engine.*
-import strikt.api.expectCatching
 import strikt.api.expectThat
 import strikt.assertions.*
 
@@ -62,16 +61,21 @@ class PickUpAndDropTest {
 
     @Test
     fun `cannot pick up item from another room`() {
-        val game = Game(connectedRooms, itemMap)
 
-        expectCatching {game.allItems.pickUp(Key, roomA)}.isFailure()
+        val eventLog = EventLog.fromList(listOf(NewRoomEvent("start room", Pair(roomA, stateA), Player)))
+        val game = Game(connectedRooms, itemMap, eventlog = eventLog)
+
+        val result = actionForPickUpItem(Key).invoke(Input(object: CommandType{}), game.eventlog, game.allItems)
+        expectThat(result).isA<NoSuchItemHereEvent>()
     }
 
     @Test
     fun `cannot pick up item already carried`() {
-        val game = Game(connectedRooms, itemMap)
+        val eventLog = EventLog.fromList(listOf(NewRoomEvent("start room", Pair(roomA, stateA), Player)))
+        val game = Game(connectedRooms, itemMap, eventlog = eventLog)
 
-        expectCatching {game.allItems.pickUp(Bottle, roomA)}.isFailure()
+        val result = actionForPickUpItem(Bottle).invoke(Input(object: CommandType{}), game.eventlog, game.allItems)
+        expectThat(result).isA<NoSuchItemHereEvent>()
     }
 
     @Test
@@ -90,9 +94,12 @@ class PickUpAndDropTest {
 
     @Test
     fun `cannot drop item not carried`() {
-        val game = Game(connectedRooms, itemMap)
 
-        expectCatching {game.allItems.drop(Key, roomA)}.isFailure()
+        val eventLog = EventLog.fromList(listOf(NewRoomEvent("start room", Pair(roomA, stateA), Player)))
+        val game = Game(connectedRooms, itemMap, eventlog = eventLog)
+
+        val result = actionForDropItem(Key).invoke(Input(object: CommandType{}), game.eventlog, game.allItems)
+        expectThat(result).isA<NoSuchItemToDropItemEvent>()
     }
 
 }
