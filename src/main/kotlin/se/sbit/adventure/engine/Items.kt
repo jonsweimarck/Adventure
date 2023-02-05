@@ -63,13 +63,26 @@ fun goActionForInventory(notCarryingAnythingEventText: String = "You don't carry
 
 // *****************
 
-//fun carriedItems(eventLog: EventLog): List<ItemType> {
-//    eventLog.log(). map{it is PickedUpItemEvent || it is DroppedItemEvent}.associateBy({(it as It, {it}})
-////        when(it){
-////            is PickedUpItemEvent -> dfdf
-////        }
-////    }
-//}
+fun carriedItems(eventLog: EventLog): List<ItemType> {
+    var itemMap = emptyMap<ItemType, Int>().toMutableMap()
+    eventLog.log().forEach{
+        if(it.character == Player){
+            if(it is PickedUpItemEvent){
+                var pickedAndDrop: Int = itemMap[it.item] ?: 0
+                itemMap[it.item] = pickedAndDrop +1
+            } else if(it is DroppedItemEvent){
+                var pickedAndDrop: Int = itemMap[it.item] ?: 0
+                itemMap[it.item] = pickedAndDrop -1
+            }
+        }
+    }
+    //sanity check
+    if(! itemMap.filterValues { it > 1 || it < 0 }.isEmpty()){
+        throw Exception("carrying more than one or less than zero of something ")
+    }
+
+    return itemMap.filter { it.value == 1 }.keys.toList()
+}
 
 // *****************
 

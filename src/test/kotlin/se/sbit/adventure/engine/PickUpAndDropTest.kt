@@ -43,7 +43,7 @@ class PickUpAndDropTest {
     fun `can carry item from start`() {
         val game = Game(connectedRooms, itemMap)
 
-        expectThat(game.allItems.carriedItems()).containsExactly(Bottle)
+        expectThat(carriedItems(game.eventlog)).containsExactly(Bottle)
     }
 
     @Test

@@ -34,8 +34,13 @@ class Game(val connections: RoomConnectionsMap,
            val eventlog: EventLog = EventLog(),
            val nonPlayerCharacters: List<NPC> = emptyList()
 ){
-
     val allItems: Items = Items(itemsPlacementMap)
+
+    init {
+        itemsPlacementMap.filter { it.value == Carried }.keys.map { PickedUpItemEvent("Carried from start", Player, it) }
+            .forEach{eventlog.add(it)}
+    }
+
 
 
     fun playerDo(input: Input, eventLog: EventLog): Event {
