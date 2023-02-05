@@ -39,8 +39,16 @@ class Game(val connections: RoomConnectionsMap,
     init {
         itemsPlacementMap.filter { it.value == Carried }.keys.map { PickedUpItemEvent("Carried from start", eventlog.getCurrentRoomAndState(Player), Player, it) }
             .forEach{eventlog.add(it)}
+
+        itemsPlacementMap.filter { it.value is InRoom }.map { DroppedItemEvent("Dropped from start", roomAndStateFor(it) , Player, it.key) }
+            .forEach{eventlog.add(it)}
     }
 
+    private fun roomAndStateFor(entry: Map.Entry<ItemType, Placement>): Pair<Room, State> {
+        val room = (entry.value as InRoom).room
+        val state = State("No real State as droped from start")
+        return Pair(room, state)
+    }
 
 
     fun playerDo(input: Input, eventLog: EventLog): Event {

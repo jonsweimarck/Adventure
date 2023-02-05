@@ -250,10 +250,10 @@ fun useKey(input: Input, eventLog: EventLog, items: Items): Event {
 
 fun takeAnyKey(input: Input, eventLog: EventLog, items: Items): Event {
     val currentRoom = eventLog.getCurrentRoom(Player)
-    if (items.itemsIn(currentRoom).filterIsInstance<Key>().isEmpty()) {
+    if (itemsIn(currentRoom, eventLog).filterIsInstance<Key>().isEmpty()) {
         return NoSuchItemHereEvent("Går inte att ta upp en sådan här!", eventLog.getCurrentRoomAndState(Player))
     } else {
-        val key = items.itemsIn(currentRoom).filterIsInstance<Key>().first()
+        val key = itemsIn(currentRoom, eventLog).filterIsInstance<Key>().first()
         actionForPickUpItem(key).invoke(input, eventLog, items)
         return PickedUpItemEvent("Du tar upp en nyckel", eventLog.getCurrentRoomAndState(Player), Player, key)
     }
@@ -301,7 +301,7 @@ fun switchOffLight(input: Input, eventLog: EventLog, items: Items): Event =
     }
 
 fun takeChainsawOrDie(input: Input, eventLog: EventLog, items: Items): Event =
-    if (eventLog.getCurrentState(Player) == darkRoom && items.itemsIn(inside).contains(Chainsaw))
+    if (eventLog.getCurrentState(Player) == darkRoom && itemsIn(inside, eventLog).contains(Chainsaw))
     {
         EndEvent("Du ser inte vad du gör i mörkret! Hoppsan, du råkar sätta på den! Oj! Aj! \nDu blev till en hög av blod!", eventLog.getCurrentRoomAndState(Player))
     } else {
@@ -345,8 +345,8 @@ fun main() {
 
         StandardInOut.showText(
             when(playerEvent){
-                is NewRoomEvent, is LookAroundEvent -> formatGameTextAndItems("${playerEvent.gameText}\n${(playerEvent as RoomEvent).roomAndState.second.description}", game.allItems.itemsIn(currentRoom))
-                is SameRoomEvent ->formatGameTextAndItems(playerEvent.gameText, game.allItems.itemsIn(currentRoom))
+                is NewRoomEvent, is LookAroundEvent -> formatGameTextAndItems("${playerEvent.gameText}\n${(playerEvent as RoomEvent).roomAndState.second.description}", itemsIn(currentRoom, eventLog))
+                is SameRoomEvent ->formatGameTextAndItems(playerEvent.gameText, itemsIn(currentRoom, eventLog))
                 else -> playerEvent.gameText
             }
         )
