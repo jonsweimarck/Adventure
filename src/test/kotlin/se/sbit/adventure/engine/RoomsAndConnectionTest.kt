@@ -119,7 +119,7 @@ class RoomsAndConnectionTest {
         @Test
         fun `can randomly chose a connected room`(){
 
-            // Setting up RoomA connected to B, C, D. But roomD can't actually be chossen because it's only State's StateGuard can not be passed
+            // Setting up RoomA connected to B, C, D. But roomD can't actually be chosen because it's only State's StateGuard can not be passed
             val alwaysPass = { _: Input, _: Room -> true}
             val alwaysStop = { _: Input, _: Room -> false}
 

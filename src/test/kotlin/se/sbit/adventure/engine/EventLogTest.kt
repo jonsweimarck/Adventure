@@ -4,21 +4,11 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import strikt.api.expectCatching
 import strikt.api.expectThat
-import strikt.assertions.isA
 import strikt.assertions.isEqualTo
 import strikt.assertions.isFailure
 
 @DisplayName("using a log of game event: ")
 class EventLogTest {
-
-    @Test
-    fun `an event can be added`(){
-        val eventLog = EventLog()
-        eventLog.add(EndEvent("Game Over"))
-
-        expectThat(eventLog.log().size).isEqualTo(1)
-        expectThat(eventLog.log()[0]).isA<EndEvent>()
-    }
 
     @Test
     fun `the current Room and State can be found from single NewRoomEvent`(){
@@ -75,7 +65,7 @@ class EventLogTest {
         val newRoomAplayer = NewRoomEvent("", Pair(roomA, stateA), Player)
         val newRoomAnpc = NewRoomEvent("", Pair(roomA, stateA), getDummyNpc())
         val sameRoomAplayer = SameRoomEvent("", Pair(roomA, stateA), Player)
-        val notARoomEvent = Event("something", Player) // <-- staying in the currentRoom without explicity stating it
+        val notARoomEvent = Event("something", Pair(roomA, stateA), Player)
 
         val log = EventLog.fromList(listOf(newRoomBplayer, newRoomAplayer, notARoomEvent, newRoomAnpc, sameRoomAplayer))
         expectThat(log.getNumberOfTurnsSinceEnteredCurrentRoom(Player)).isEqualTo(3)

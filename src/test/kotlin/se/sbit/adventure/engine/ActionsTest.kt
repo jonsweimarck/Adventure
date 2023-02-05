@@ -55,14 +55,14 @@ class ActionsTest {
     }
 
     // Mapping user inputs to what event-returning function to run
-    data class KeyUsedSuccessfully(val newKey: Key) : Event("The was used successfully!")
-    data class KeyAlreadyUsed(val newKey: Key) : Event("You have already used the key")
-    object NoUsageOfKey : Event("You cannot use the key here!")
-    object NoKeyToBeUsed : Event("You havn't got a key, have you?")
+    class KeyUsedSuccessfully(val newKey: Key, roomAndState: Pair<Room, State>) : Event("The was used successfully!", roomAndState)
+    class KeyAlreadyUsed(val newKey: Key, roomAndState: Pair<Room, State>) : Event("You have already used the key", roomAndState)
+    class NoUsageOfKey(roomAndState: Pair<Room, State>) : Event("You cannot use the key here!", roomAndState)
+    class NoKeyToBeUsed(roomAndState: Pair<Room, State>) : Event("You havn't got a key, have you?", roomAndState)
 
-    object ThingUsedSuccessfully : Event("The Thing was used successfully!")
+    class ThingUsedSuccessfully(roomAndState: Pair<Room, State>) : Event("The Thing was used successfully!", roomAndState)
 
-    object DancingEvent: Event("Dance, dance, dance!")
+    class DancingEvent(roomAndState: Pair<Room, State>): Event("Dance, dance, dance!", roomAndState)
 
     val actionMap: Map<CommandType, (Input, EventLog, Items) -> Event> = mapOf(
         GoCommand.GoEast to actionForGo(connectedRooms),
@@ -72,35 +72,35 @@ class ActionsTest {
         ActionCommand.UseKey to ::useKey,
         ActionCommand.UseThing to ::useThing,
         ActionCommand.UseNotCarriedThing to ::useUncarriedThing,
-        ActionCommand.Dance to { _, _, _  -> DancingEvent }
+        ActionCommand.Dance to { _, eventlog, _  -> DancingEvent(eventlog.getCurrentRoomAndState(Player)) }
     )
 
 
     fun useKey(input: Input, eventLog: EventLog, items: Items): Event {
         if(carriedItems(eventLog).filterIsInstance<Key>().isEmpty()){
-            return NoKeyToBeUsed;
+            return NoKeyToBeUsed(eventLog.getCurrentRoomAndState(Player))
         }
 
         if(eventLog.getCurrentRoom(Player) != roomA){
-            return NoUsageOfKey;
+            return NoUsageOfKey(eventLog.getCurrentRoomAndState(Player))
         }
         val currentKey = carriedItems(eventLog).filterIsInstance<Key>().first()
 
         if(currentKey == UsedKey) {
-            return KeyAlreadyUsed(currentKey)
+            return KeyAlreadyUsed(currentKey, (eventLog.getCurrentRoomAndState(Player)))
         }
 
-        return KeyUsedSuccessfully(UsedKey);
+        return KeyUsedSuccessfully(UsedKey, eventLog.getCurrentRoomAndState(Player));
     }
 
     fun useThing(input: Input, eventLog: EventLog, items: Items): Event {
         items.replaceCarried(UnusedThing, UsedThing, eventLog)
-        return ThingUsedSuccessfully;
+        return ThingUsedSuccessfully(eventLog.getCurrentRoomAndState(Player));
     }
 
     fun useUncarriedThing(input: Input, eventLog: EventLog, items: Items): Event {
         items.replaceCarried(Sword, UsedThing, eventLog) // <- Should throw as we are not carrying a Receipt
-        return ThingUsedSuccessfully;
+        return ThingUsedSuccessfully(eventLog.getCurrentRoomAndState(Player))
     }
 
 
