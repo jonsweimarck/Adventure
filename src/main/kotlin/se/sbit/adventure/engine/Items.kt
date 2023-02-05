@@ -11,10 +11,11 @@ sealed class Placement
 object Carried : Placement()
 data class InRoom(val room: Room): Placement()
 
+abstract class ItemPickedOrDropped(gameText: String, character: Character, val item: ItemType ): Event(gameText, character)
+class PickedUpItemEvent(gameText: String,  character: Character,  item: ItemType):ItemPickedOrDropped(gameText, character, item)
+class DroppedItemEvent(gameText: String,  character: Character,  item: ItemType):ItemPickedOrDropped(gameText, character, item)
 
 class NoSuchItemHereEvent(gameText: String):Event(gameText)
-class PickedUpItemEvent(gameText: String):Event(gameText)
-class DroppedItemEvent(gameText: String):Event(gameText)
 class NoSuchItemToDropItemEvent(gameText: String):Event(gameText)
 class InventoryEvent(gameText: String):Event(gameText)
 
@@ -26,7 +27,7 @@ fun actionForPickUpItem(itemToPickUp:ItemType, noSuchItemHereEventText: String =
             return NoSuchItemHereEvent(noSuchItemHereEventText)
         }
         items.pickUp(itemToPickUp, currentRoom)
-        return PickedUpItemEvent("${pickedUpEventText} ${itemToPickUp.description}.")
+        return PickedUpItemEvent("$pickedUpEventText ${itemToPickUp.description}.", Player, itemToPickUp)
     }
 }
 
@@ -45,7 +46,7 @@ fun actionForDropItem(itemToDrop:ItemType, noSuchItemToDropEventText: String = "
             return NoSuchItemToDropItemEvent(noSuchItemToDropEventText)
         }
         items.drop(itemToDrop, eventLog.getCurrentRoom(Player))
-        return DroppedItemEvent("${droppedItemEventText} ${itemToDrop.description}.")
+        return DroppedItemEvent("${droppedItemEventText} ${itemToDrop.description}.", Player, itemToDrop)
     }
 
 }
@@ -59,6 +60,19 @@ fun goActionForInventory(notCarryingAnythingEventText: String = "You don't carry
         return InventoryEvent( "${carryingEventText} ${items.carriedItems().joinToString { it.description }}")
     }
 }
+
+// *****************
+
+//fun carriedItems(eventLog: EventLog): List<ItemType> {
+//    eventLog.log(). map{it is PickedUpItemEvent || it is DroppedItemEvent}.associateBy({(it as It, {it}})
+////        when(it){
+////            is PickedUpItemEvent -> dfdf
+////        }
+////    }
+//}
+
+// *****************
+
 
 class Items(initialItemMap: ItemsPlacementMap) {
 

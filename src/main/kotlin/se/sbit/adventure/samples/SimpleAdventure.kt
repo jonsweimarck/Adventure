@@ -255,7 +255,7 @@ fun takeAnyKey(input: Input, eventLog: EventLog, items: Items): Event {
     } else {
         val key = items.itemsIn(currentRoom).filterIsInstance<Key>().first()
         items.pickUp(key, currentRoom)
-        return PickedUpItemEvent("Du tar upp en nyckel")
+        return PickedUpItemEvent("Du tar upp en nyckel", Player, key)
     }
 }
 
@@ -265,7 +265,7 @@ fun dropAnyKey(input: Input, eventLog: EventLog, items: Items): Event =
     } else {
         val key = items.carriedItems().filterIsInstance<Key>().first()
         items.drop(key, eventLog.getCurrentRoom(Player))
-        DroppedItemEvent("Du släpper en nyckel")
+        DroppedItemEvent("Du släpper en nyckel", Player, key)
     }
 fun examineKey(input: Input, eventLog: EventLog, items: Items): Event =
     if (items.carriedItems().contains(UnusedKey)) {
