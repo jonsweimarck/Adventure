@@ -7,6 +7,33 @@ interface ItemType {
     val description: String
 }
 
+data class Itemstate(val description: String)
+
+interface Item {
+    fun description(eventLog: EventLog): String
+    fun state(eventLog: EventLog): Itemstate
+
+}
+
+abstract class SinglestateItem(val state: Itemstate):Item {
+    override fun state(eventLog: EventLog): Itemstate = state
+    override fun description(eventLog: EventLog): String = state.description
+}
+
+abstract class MultistateItem (val states: List<Pair<(EventLog)-> Boolean,  Itemstate> >): Item {
+
+    override fun description(eventLog: EventLog): String =
+        state(eventLog).description
+
+    override fun state(eventLog: EventLog): Itemstate =
+        when(val index = states.indexOfFirst { it.first.invoke(eventLog) } ) {
+            -1 -> throw Exception("No matching itemstate was found for item")
+            else -> states[index].second
+        }
+}
+
+
+
 sealed class Placement
 object Carried : Placement()
 data class InRoom(val room: Room): Placement()
