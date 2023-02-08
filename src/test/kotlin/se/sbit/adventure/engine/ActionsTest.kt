@@ -3,9 +3,11 @@ package se.sbit.adventure.engine
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import se.sbit.adventure.engine.*
+import se.sbit.adventure.samples.KeyUsedSuccessfully
 import strikt.api.expectCatching
 import strikt.api.expectThat
 import strikt.assertions.*
+
 
 /**
  * Note: To see the test names when running in IntelliJ IDE and not only in Gradle HTML report,
@@ -55,7 +57,7 @@ class ActionsTest {
     }
 
     // Mapping user inputs to what event-returning function to run
-    class KeyUsedSuccessfully(val newKey: Key, roomAndState: Pair<Room, State>) : Event("The was used successfully!", roomAndState)
+    class KeyUsedSuccessfully(val newKey: Key, roomAndState: Pair<Room, State>) : Event("The key was used successfully!", roomAndState)
     class KeyAlreadyUsed(val newKey: Key, roomAndState: Pair<Room, State>) : Event("You have already used the key", roomAndState)
     class NoUsageOfKey(roomAndState: Pair<Room, State>) : Event("You cannot use the key here!", roomAndState)
     class NoKeyToBeUsed(roomAndState: Pair<Room, State>) : Event("You havn't got a key, have you?", roomAndState)

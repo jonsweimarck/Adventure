@@ -57,6 +57,36 @@ fun actionForGo(connectionsMap: RoomConnectionsMap,
     }
 }
 
+fun actionForGo2(connectionsMap: RoomConnectionsMap,
+                sameRoomEventText: String = "That didn't work!"): (Input, EventLog, Items2) -> Event
+{
+    return fun(input, eventLog, _): Event {
+        val currentRoomAndState = eventLog.getCurrentRoomAndState(Player)
+        val currentRoom  = currentRoomAndState.first
+
+        // find new room
+        val roomConnections = connectionsMap.getOrElse(currentRoom) {
+            // Should neeeeeever happen.The room has no connections!
+            return SameRoomEvent(sameRoomEventText, currentRoomAndState, Player)
+        }
+
+        val roomIndex = roomConnections.indexOfFirst { it.first.invoke(input) }
+        if (roomIndex == -1) {
+            // Trying to walk in an unconnected direction
+            return SameRoomEvent(sameRoomEventText, currentRoomAndState, Player)
+        }
+        val newRoom = roomConnections[roomIndex].second
+
+        val stateIndex = newRoom.states.indexOfFirst { it.first.invoke(input, currentRoom) }
+        if (stateIndex == -1) {
+            // No state matches!
+            return SameRoomEvent(sameRoomEventText, currentRoomAndState, Player)
+        }
+        val newState = newRoom.states[stateIndex].second
+
+        return NewRoomEvent("", Pair(newRoom, newState), Player)
+    }
+}
 
 fun goWherePossible(roomConnections: Map<Room, List<Room>>, eventLog: EventLog, character: Character, enterRoomGameText: String): Event {
     val currentRoomAndState = eventLog.getCurrentRoomAndState(character)

@@ -2,6 +2,7 @@ package se.sbit.adventure.engine
 
 
 typealias ItemsPlacementMap = Map<ItemType, Placement>
+typealias ItemsPlacementMap2 = Map<Item, Placement>
 
 interface ItemType {
     val description: String
@@ -20,7 +21,7 @@ abstract class SinglestateItem(val state: Itemstate):Item {
     override fun description(eventLog: EventLog): String = state.description
 }
 
-abstract class MultistateItem (val states: List<Pair<(EventLog)-> Boolean,  Itemstate> >): Item {
+open class MultistateItem (val states: List<Pair<(EventLog)-> Boolean,  Itemstate> >): Item {
 
     override fun description(eventLog: EventLog): String =
         state(eventLog).description
@@ -39,8 +40,11 @@ object Carried : Placement()
 data class InRoom(val room: Room): Placement()
 
 abstract class ItemPickedOrDropped(gameText: String, roomAndState: Pair<Room, State>, character: Character, val item: ItemType ): Event(gameText, roomAndState, character)
+abstract class ItemPickedOrDropped2(gameText: String, roomAndState: Pair<Room, State>, character: Character, val item: Item ): Event(gameText, roomAndState, character)
 class PickedUpItemEvent(gameText: String, roomAndState: Pair<Room, State>, character: Character,  item: ItemType):ItemPickedOrDropped(gameText, roomAndState, character, item)
+class PickedUpItemEvent2(gameText: String, roomAndState: Pair<Room, State>, character: Character,  item: Item):ItemPickedOrDropped2(gameText, roomAndState, character, item)
 class DroppedItemEvent(gameText: String,  roomAndState: Pair<Room, State>, character: Character,  item: ItemType):ItemPickedOrDropped(gameText,roomAndState, character, item)
+class DroppedItemEvent2(gameText: String,  roomAndState: Pair<Room, State>, character: Character,  item: Item):ItemPickedOrDropped2(gameText,roomAndState, character, item)
 
 class NoSuchItemHereEvent(gameText: String, roomAndState: Pair<Room, State>):Event(gameText, roomAndState)
 class NoSuchItemToDropItemEvent(gameText: String, roomAndState: Pair<Room, State>):Event(gameText, roomAndState)
@@ -66,7 +70,7 @@ fun actionForExamineItem(itemToExam: ItemType, successGameText: String= "You don
             false -> Event(failureGameText, eventLog.getCurrentRoomAndState(Player))
         }
 
-
+@Deprecated("")
 fun actionForDropItem(itemToDrop:ItemType, noSuchItemToDropEventText: String = "That didn't work!", droppedItemEventText: String = "Dropped"): (Input, EventLog, Items) -> Event
 {
     return fun(_, eventLog, _): Event {
@@ -74,6 +78,17 @@ fun actionForDropItem(itemToDrop:ItemType, noSuchItemToDropEventText: String = "
             return NoSuchItemToDropItemEvent(noSuchItemToDropEventText, eventLog.getCurrentRoomAndState(Player))
         }
         return DroppedItemEvent("${droppedItemEventText} ${itemToDrop.description}.", eventLog.getCurrentRoomAndState(Player), Player, itemToDrop)
+    }
+
+}
+
+fun actionForDropItem2(itemToDrop:Item, noSuchItemToDropEventText: String = "That didn't work!", droppedItemEventText: String = "Dropped"): (Input, EventLog, Items2) -> Event
+{
+    return fun(_, eventLog, _): Event {
+        if (carriedItems2(eventLog).none { it == itemToDrop }){
+            return NoSuchItemToDropItemEvent(noSuchItemToDropEventText, eventLog.getCurrentRoomAndState(Player))
+        }
+        return DroppedItemEvent2("$droppedItemEventText ${itemToDrop.description(eventLog)}.", eventLog.getCurrentRoomAndState(Player), Player, itemToDrop)
     }
 
 }
@@ -119,8 +134,20 @@ fun itemsIn(room: Room, eventLog: EventLog): List<ItemType> {
 }
 
 
+fun carriedItems2(eventLog: EventLog): List<Item> {
 
+    var itemSet = emptySet<Item>().toMutableSet()
+    eventLog.log().forEach {
+        if (it is PickedUpItemEvent2) {
+            itemSet.add(it.item)
+        } else if (it is DroppedItemEvent2) {
+            itemSet.remove(it.item)
+        }
+    }
+    return itemSet.toList()
+}
 
+@Deprecated("")
 fun carriedItems(eventLog: EventLog): List<ItemType> {
 
     var itemSet = emptySet<ItemType>().toMutableSet()
@@ -165,6 +192,33 @@ class Items(initialItemMap: ItemsPlacementMap) {
     // Kan man göra denna eller hela itemMap unmutable?
     fun replaceCarried(carriedItem: ItemType, replaceWith: ItemType, eventLog: EventLog): ItemType {
         if(! carriedItems(eventLog).contains(carriedItem)){
+            throw Exception("Tried to replace not carried item")
+        }
+
+        itemMap.put(replaceWith, Carried)
+        itemMap.remove(carriedItem)
+        return replaceWith
+    }
+
+}
+
+
+class Items2(initialItemMap: ItemsPlacementMap2) {
+
+    private val itemMap: MutableMap<Item, Placement> = initialItemMap.toMutableMap()
+
+
+//    @Deprecated("Use caller fu above instead")
+//    fun itemsIn(room: Room): List<ItemType> = itemMap.entries
+//        .filter{it.value is InRoom }
+//        .filter{(it.value as InRoom).room == room}
+//        .map{it.key}
+
+
+    @Deprecated("Use caller fun above instead")
+    // Kan man göra denna eller hela itemMap unmutable?
+    fun replaceCarried(carriedItem: Item, replaceWith: Item, eventLog: EventLog): Item {
+        if(! carriedItems2(eventLog).contains(carriedItem)){
             throw Exception("Tried to replace not carried item")
         }
 
