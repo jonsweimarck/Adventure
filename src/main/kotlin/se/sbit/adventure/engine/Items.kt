@@ -43,9 +43,9 @@ data class InRoom(val room: Room): Placement()
 abstract class ItemPickedOrDropped(gameText: String, roomAndState: Pair<Room, State>, character: Character, val item: ItemType ): Event(gameText, roomAndState, character)
 abstract class ItemPickedOrDropped2(gameText: String, roomAndState: Pair<Room, State>, character: Character, val item: Item ): Event(gameText, roomAndState, character)
 
-
-@Deprecated("") class PickedUpItemEvent(gameText: String, roomAndState: Pair<Room, State>, character: Character,  item: ItemType):ItemPickedOrDropped(gameText, roomAndState, character, item)
-@Deprecated("") class DroppedItemEvent(gameText: String,  roomAndState: Pair<Room, State>, character: Character,  item: ItemType):ItemPickedOrDropped(gameText,roomAndState, character, item)
+//
+//@Deprecated("") class PickedUpItemEvent(gameText: String, roomAndState: Pair<Room, State>, character: Character,  item: ItemType):ItemPickedOrDropped(gameText, roomAndState, character, item)
+//@Deprecated("") class DroppedItemEvent(gameText: String,  roomAndState: Pair<Room, State>, character: Character,  item: ItemType):ItemPickedOrDropped(gameText,roomAndState, character, item)
 
 class DroppedItemEvent2(gameText: String,  roomAndState: Pair<Room, State>, character: Character,  item: Item):ItemPickedOrDropped2(gameText,roomAndState, character, item)
 class PickedUpItemEvent2(gameText: String, roomAndState: Pair<Room, State>, character: Character,  item: Item):ItemPickedOrDropped2(gameText, roomAndState, character, item)
@@ -53,18 +53,18 @@ class NoSuchItemHereEvent(gameText: String, roomAndState: Pair<Room, State>):Eve
 class NoSuchItemToDropItemEvent(gameText: String, roomAndState: Pair<Room, State>):Event(gameText, roomAndState)
 class InventoryEvent(gameText: String, roomAndState: Pair<Room, State>):Event(gameText, roomAndState)
 
-@Deprecated("")
-fun actionForPickUpItem(itemToPickUp:ItemType, noSuchItemHereEventText: String = "That didn't work!", pickedUpEventText: String = "Picked up"): (Input, EventLog, Items) -> Event
-{
-    return fun(input, eventLog, items): Event {
-        val currentRoomAndState = eventLog.getCurrentRoomAndState(Player)
-        val currentRoom = currentRoomAndState.first
-        if (itemsIn(currentRoom, eventLog).none { it == itemToPickUp }){
-            return NoSuchItemHereEvent(noSuchItemHereEventText, currentRoomAndState)
-        }
-        return PickedUpItemEvent("$pickedUpEventText ${itemToPickUp.description}.", currentRoomAndState, Player, itemToPickUp)
-    }
-}
+//@Deprecated("")
+//fun actionForPickUpItem(itemToPickUp:ItemType, noSuchItemHereEventText: String = "That didn't work!", pickedUpEventText: String = "Picked up"): (Input, EventLog, Items) -> Event
+//{
+//    return fun(input, eventLog, items): Event {
+//        val currentRoomAndState = eventLog.getCurrentRoomAndState(Player)
+//        val currentRoom = currentRoomAndState.first
+//        if (itemsIn(currentRoom, eventLog).none { it == itemToPickUp }){
+//            return NoSuchItemHereEvent(noSuchItemHereEventText, currentRoomAndState)
+//        }
+//        return PickedUpItemEvent("$pickedUpEventText ${itemToPickUp.description}.", currentRoomAndState, Player, itemToPickUp)
+//    }
+//}
 
 fun actionForPickUpItem2(itemToPickUp:Item, noSuchItemHereEventText: String = "That didn't work!", pickedUpEventText: String = "Picked up"): (Input, EventLog, Items2) -> Event
 {
@@ -78,13 +78,13 @@ fun actionForPickUpItem2(itemToPickUp:Item, noSuchItemHereEventText: String = "T
     }
 }
 
-@Deprecated("")
-fun actionForExamineItem(itemToExam: ItemType, successGameText: String= "You don't see anything special", failureGameText:String = "You don't carry that" ): (Input, EventLog, Items) -> Event =
-    fun(_, eventLog, items): Event =
-        when(carriedItems(eventLog).contains(itemToExam)) {
-            true -> Event(successGameText, eventLog.getCurrentRoomAndState(Player))
-            false -> Event(failureGameText, eventLog.getCurrentRoomAndState(Player))
-        }
+//@Deprecated("")
+//fun actionForExamineItem(itemToExam: ItemType, successGameText: String= "You don't see anything special", failureGameText:String = "You don't carry that" ): (Input, EventLog, Items) -> Event =
+//    fun(_, eventLog, items): Event =
+//        when(carriedItems(eventLog).contains(itemToExam)) {
+//            true -> Event(successGameText, eventLog.getCurrentRoomAndState(Player))
+//            false -> Event(failureGameText, eventLog.getCurrentRoomAndState(Player))
+//        }
 
 fun actionForExamineItem2(itemToExam: Item, successGameText: String= "You don't see anything special", failureGameText:String = "You don't carry that" ): (Input, EventLog, Items2) -> Event =
     fun(_, eventLog, _): Event =
@@ -93,17 +93,17 @@ fun actionForExamineItem2(itemToExam: Item, successGameText: String= "You don't 
             false -> Event(failureGameText, eventLog.getCurrentRoomAndState(Player))
         }
 
-@Deprecated("")
-fun actionForDropItem(itemToDrop:ItemType, noSuchItemToDropEventText: String = "That didn't work!", droppedItemEventText: String = "Dropped"): (Input, EventLog, Items) -> Event
-{
-    return fun(_, eventLog, _): Event {
-        if (carriedItems(eventLog).none { it == itemToDrop }){
-            return NoSuchItemToDropItemEvent(noSuchItemToDropEventText, eventLog.getCurrentRoomAndState(Player))
-        }
-        return DroppedItemEvent("${droppedItemEventText} ${itemToDrop.description}.", eventLog.getCurrentRoomAndState(Player), Player, itemToDrop)
-    }
-
-}
+//@Deprecated("")
+//fun actionForDropItem(itemToDrop:ItemType, noSuchItemToDropEventText: String = "That didn't work!", droppedItemEventText: String = "Dropped"): (Input, EventLog, Items) -> Event
+//{
+//    return fun(_, eventLog, _): Event {
+//        if (carriedItems(eventLog).none { it == itemToDrop }){
+//            return NoSuchItemToDropItemEvent(noSuchItemToDropEventText, eventLog.getCurrentRoomAndState(Player))
+//        }
+//        return DroppedItemEvent("${droppedItemEventText} ${itemToDrop.description}.", eventLog.getCurrentRoomAndState(Player), Player, itemToDrop)
+//    }
+//
+//}
 
 fun actionForDropItem2(itemToDrop:Item, noSuchItemToDropEventText: String = "That didn't work!", droppedItemEventText: String = "Dropped"): (Input, EventLog, Items2) -> Event
 {
@@ -115,16 +115,16 @@ fun actionForDropItem2(itemToDrop:Item, noSuchItemToDropEventText: String = "Tha
     }
 
 }
-@Deprecated("")
-fun goActionForInventory(notCarryingAnythingEventText: String = "You don't carry anything!", carryingEventText: String = "You carry"): (Input, EventLog, Items) -> Event
-{
-    return fun(_, eventLog, items): Event {
-        if (carriedItems(eventLog).isEmpty()) {
-            return InventoryEvent(notCarryingAnythingEventText,eventLog.getCurrentRoomAndState(Player))
-        }
-        return InventoryEvent( "${carryingEventText} ${carriedItems(eventLog).joinToString { it.description }}", eventLog.getCurrentRoomAndState(Player))
-    }
-}
+//@Deprecated("")
+//fun goActionForInventory(notCarryingAnythingEventText: String = "You don't carry anything!", carryingEventText: String = "You carry"): (Input, EventLog, Items) -> Event
+//{
+//    return fun(_, eventLog, items): Event {
+//        if (carriedItems(eventLog).isEmpty()) {
+//            return InventoryEvent(notCarryingAnythingEventText,eventLog.getCurrentRoomAndState(Player))
+//        }
+//        return InventoryEvent( "${carryingEventText} ${carriedItems(eventLog).joinToString { it.description }}", eventLog.getCurrentRoomAndState(Player))
+//    }
+//}
 
 fun goActionForInventory2(notCarryingAnythingEventText: String = "You don't carry anything!", carryingEventText: String = "You carry"): (Input, EventLog, Items2) -> Event
 {
@@ -151,20 +151,20 @@ fun itemsIn2(room: Room, eventLog: EventLog): List<Item> {
     return itemSet.toList()
 }
 
-@Deprecated("")
-fun itemsIn(room: Room, eventLog: EventLog): List<ItemType> {
-    var itemSet = emptySet<ItemType>().toMutableSet()
-    eventLog.log().forEach{
-        if(it.roomAndState.first == room) {
-            if (it is DroppedItemEvent) {
-                itemSet.add(it.item)
-            } else if (it is PickedUpItemEvent) {
-                itemSet.remove(it.item)
-            }
-        }
-    }
-    return itemSet.toList()
-}
+//@Deprecated("")
+//fun itemsIn(room: Room, eventLog: EventLog): List<ItemType> {
+//    var itemSet = emptySet<ItemType>().toMutableSet()
+//    eventLog.log().forEach{
+//        if(it.roomAndState.first == room) {
+//            if (it is DroppedItemEvent) {
+//                itemSet.add(it.item)
+//            } else if (it is PickedUpItemEvent) {
+//                itemSet.remove(it.item)
+//            }
+//        }
+//    }
+//    return itemSet.toList()
+//}
 
 
 fun carriedItems2(eventLog: EventLog): List<Item> {
@@ -180,86 +180,11 @@ fun carriedItems2(eventLog: EventLog): List<Item> {
     return itemSet.toList()
 }
 
-@Deprecated("")
-fun carriedItems(eventLog: EventLog): List<ItemType> {
-
-    var itemSet = emptySet<ItemType>().toMutableSet()
-    eventLog.log().forEach{
-        if(it is PickedUpItemEvent){
-            itemSet.add(it.item)
-        } else if(it is DroppedItemEvent){
-            itemSet.remove(it.item)
-        }
-    }
-    return itemSet.toList()
-
-//    var itemMap = emptyMap<ItemType, Boolean >().toMutableMap()
-//    eventLog.log().forEach{
-//        if(it.character == Player){
-//            if(it is PickedUpItemEvent){
-//                itemMap[it.item] = true
-//            } else if(it is DroppedItemEvent){
-//                itemMap[it.item] = false
-//            }
-//        }
-//    }
-//
-//    return itemMap.filter { it.value }.keys.toList()
-}
-
-
-
-@Deprecated("")
-class Items(initialItemMap: ItemsPlacementMap) {
-
-    private val itemMap: MutableMap<ItemType, Placement> = initialItemMap.toMutableMap()
-
-
-//    @Deprecated("Use caller fu above instead")
-//    fun itemsIn(room: Room): List<ItemType> = itemMap.entries
-//        .filter{it.value is InRoom }
-//        .filter{(it.value as InRoom).room == room}
-//        .map{it.key}
-
-
-    @Deprecated("Use caller fun above instead")
-    // Kan man göra denna eller hela itemMap unmutable?
-    fun replaceCarried(carriedItem: ItemType, replaceWith: ItemType, eventLog: EventLog): ItemType {
-        if(! carriedItems(eventLog).contains(carriedItem)){
-            throw Exception("Tried to replace not carried item")
-        }
-
-        itemMap.put(replaceWith, Carried)
-        itemMap.remove(carriedItem)
-        return replaceWith
-    }
-
-}
-
 
 class Items2(initialItemMap: ItemsPlacementMap2) {
 
     private val itemMap: MutableMap<Item, Placement> = initialItemMap.toMutableMap()
 
-
-//    @Deprecated("Use caller fu above instead")
-//    fun itemsIn(room: Room): List<ItemType> = itemMap.entries
-//        .filter{it.value is InRoom }
-//        .filter{(it.value as InRoom).room == room}
-//        .map{it.key}
-
-
-    @Deprecated("Use caller fun above instead")
-    // Kan man göra denna eller hela itemMap unmutable?
-    fun replaceCarried(carriedItem: Item, replaceWith: Item, eventLog: EventLog): Item {
-        if(! carriedItems2(eventLog).contains(carriedItem)){
-            throw Exception("Tried to replace not carried item")
-        }
-
-        itemMap.put(replaceWith, Carried)
-        itemMap.remove(carriedItem)
-        return replaceWith
-    }
 
 }
 
