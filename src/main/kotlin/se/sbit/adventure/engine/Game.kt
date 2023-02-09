@@ -18,10 +18,10 @@ data class State (val description: String)
 open class Event(val gameText: String, val roomAndState: Pair<Room, State>, val character: Character = Player)
 open class EndEvent(gameEndText:String, roomAndState: Pair<Room, State>):Event(gameEndText, roomAndState)
 
-open class RoomEvent(gameText: String, roomAndState: Pair<Room, State>, character: Character, ) : Event("$gameText", roomAndState, character)
-class NewRoomEvent(gameText: String, newRoomAndState: Pair<Room, State>, character: Character, ): RoomEvent(gameText, newRoomAndState, character)
-class SameRoomEvent(gameText: String, newRoomAndState: Pair<Room, State>, character: Character, ): RoomEvent(gameText, newRoomAndState, character)
-class LookAroundEvent(gameText: String, newRoomAndState: Pair<Room, State>, character: Character, ): RoomEvent(gameText, newRoomAndState, character)
+open class RoomEvent(gameText: String, roomAndState: Pair<Room, State>, character: Character) : Event(gameText, roomAndState, character)
+class NewRoomEvent(gameText: String, newRoomAndState: Pair<Room, State>, character: Character): RoomEvent(gameText, newRoomAndState, character)
+class SameRoomEvent(gameText: String, newRoomAndState: Pair<Room, State>, character: Character): RoomEvent(gameText, newRoomAndState, character)
+class LookAroundEvent(gameText: String, newRoomAndState: Pair<Room, State>, character: Character): RoomEvent(gameText, newRoomAndState, character)
 
 
 typealias RoomConnectionsMap =  Map<Room, List<Pair<RoomGuard, Room>>>
@@ -37,11 +37,11 @@ class Game(val connections: RoomConnectionsMap,
 
     init {
         itemsPlacementMap.filter { it.value == Carried }.keys
-            .map { PickedUpItemEvent2("Carried from start", eventlog.getCurrentRoomAndState(Player), Player, it) }
+            .map { PickedUpItemEvent("Carried from start", eventlog.getCurrentRoomAndState(Player), Player, it) }
             .forEach { eventlog.add(it) }
 
         itemsPlacementMap.filter { it.value is InRoom }
-            .map { DroppedItemEvent2("Dropped from start", roomAndStateFor(it), Player, it.key) }
+            .map { DroppedItemEvent("Dropped from start", roomAndStateFor(it), Player, it.key) }
             .forEach { eventlog.add(it) }
     }
 

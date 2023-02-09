@@ -37,7 +37,7 @@ class EventLog {
 
     companion object {
         fun fromList(initialEvents: List<Event>): EventLog {
-            var e = EventLog()
+            val e = EventLog()
             e.events = initialEvents
             return e
         }

@@ -12,12 +12,12 @@ interface Item {
 
 }
 
-abstract class SinglestateItem(val state: Itemstate):Item {
+abstract class SinglestateItem(private val state: Itemstate):Item {
     override fun state(eventLog: EventLog): Itemstate = state
     override fun description(eventLog: EventLog): String = state.description
 }
 
-open class MultistateItem (val states: List<Pair<(EventLog)-> Boolean,  Itemstate> >): Item {
+open class MultistateItem (private val states: List<Pair<(EventLog)-> Boolean,  Itemstate> >): Item {
 
     override fun description(eventLog: EventLog): String =
         state(eventLog).description
@@ -34,11 +34,11 @@ sealed class Placement
 object Carried : Placement()
 data class InRoom(val room: Room): Placement()
 
-abstract class ItemPickedOrDropped2(gameText: String, roomAndState: Pair<Room, State>, character: Character, val item: Item ): Event(gameText, roomAndState, character)
+abstract class ItemPickedOrDropped(gameText: String, roomAndState: Pair<Room, State>, character: Character, val item: Item ): Event(gameText, roomAndState, character)
 
 
-class DroppedItemEvent2(gameText: String,  roomAndState: Pair<Room, State>, character: Character,  item: Item):ItemPickedOrDropped2(gameText,roomAndState, character, item)
-class PickedUpItemEvent2(gameText: String, roomAndState: Pair<Room, State>, character: Character,  item: Item):ItemPickedOrDropped2(gameText, roomAndState, character, item)
+class DroppedItemEvent(gameText: String, roomAndState: Pair<Room, State>, character: Character, item: Item):ItemPickedOrDropped(gameText,roomAndState, character, item)
+class PickedUpItemEvent(gameText: String, roomAndState: Pair<Room, State>, character: Character, item: Item):ItemPickedOrDropped(gameText, roomAndState, character, item)
 class NoSuchItemHereEvent(gameText: String, roomAndState: Pair<Room, State>):Event(gameText, roomAndState)
 class NoSuchItemToDropItemEvent(gameText: String, roomAndState: Pair<Room, State>):Event(gameText, roomAndState)
 class InventoryEvent(gameText: String, roomAndState: Pair<Room, State>):Event(gameText, roomAndState)
@@ -46,13 +46,13 @@ class InventoryEvent(gameText: String, roomAndState: Pair<Room, State>):Event(ga
 
 fun actionForPickUpItem(itemToPickUp:Item, noSuchItemHereEventText: String = "That didn't work!", pickedUpEventText: String = "Picked up"): (Input, EventLog) -> Event
 {
-    return fun(input, eventLog): Event {
+    return fun(_ , eventLog): Event {
         val currentRoomAndState = eventLog.getCurrentRoomAndState(Player)
         val currentRoom = currentRoomAndState.first
         if (itemsIn(currentRoom, eventLog).none { it == itemToPickUp }){
             return NoSuchItemHereEvent(noSuchItemHereEventText, currentRoomAndState)
         }
-        return PickedUpItemEvent2("$pickedUpEventText ${itemToPickUp.description(eventLog)}.", currentRoomAndState, Player, itemToPickUp)
+        return PickedUpItemEvent("$pickedUpEventText ${itemToPickUp.description(eventLog)}.", currentRoomAndState, Player, itemToPickUp)
     }
 }
 
@@ -71,7 +71,7 @@ fun actionForDropItem(itemToDrop:Item, noSuchItemToDropEventText: String = "That
         if (carriedItems(eventLog).none { it == itemToDrop }){
             return NoSuchItemToDropItemEvent(noSuchItemToDropEventText, eventLog.getCurrentRoomAndState(Player))
         }
-        return DroppedItemEvent2("$droppedItemEventText ${itemToDrop.description(eventLog)}.", eventLog.getCurrentRoomAndState(Player), Player, itemToDrop)
+        return DroppedItemEvent("$droppedItemEventText ${itemToDrop.description(eventLog)}.", eventLog.getCurrentRoomAndState(Player), Player, itemToDrop)
     }
 
 }
@@ -82,18 +82,18 @@ fun goActionForInventory(notCarryingAnythingEventText: String = "You don't carry
         if (carriedItems(eventLog).isEmpty()) {
             return InventoryEvent(notCarryingAnythingEventText,eventLog.getCurrentRoomAndState(Player))
         }
-        return InventoryEvent( "${carryingEventText} ${carriedItems(eventLog).joinToString { it.description(eventLog) }}", eventLog.getCurrentRoomAndState(Player))
+        return InventoryEvent( "$carryingEventText ${carriedItems(eventLog).joinToString { it.description(eventLog) }}", eventLog.getCurrentRoomAndState(Player))
     }
 }
 
 
 fun itemsIn(room: Room, eventLog: EventLog): List<Item> {
-    var itemSet = emptySet<Item>().toMutableSet()
+    val itemSet = emptySet<Item>().toMutableSet()
     eventLog.log().forEach{
         if(it.roomAndState.first == room) {
-            if (it is DroppedItemEvent2) {
+            if (it is DroppedItemEvent) {
                 itemSet.add(it.item)
-            } else if (it is PickedUpItemEvent2) {
+            } else if (it is PickedUpItemEvent) {
                 itemSet.remove(it.item)
             }
         }
@@ -105,11 +105,11 @@ fun itemsIn(room: Room, eventLog: EventLog): List<Item> {
 
 fun carriedItems(eventLog: EventLog): List<Item> {
 
-    var itemSet = emptySet<Item>().toMutableSet()
+    val itemSet = emptySet<Item>().toMutableSet()
     eventLog.log().forEach {
-        if (it is PickedUpItemEvent2) {
+        if (it is PickedUpItemEvent) {
             itemSet.add(it.item)
-        } else if (it is DroppedItemEvent2) {
+        } else if (it is DroppedItemEvent) {
             itemSet.remove(it.item)
         }
     }
