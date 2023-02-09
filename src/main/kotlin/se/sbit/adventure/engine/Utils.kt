@@ -26,10 +26,10 @@ infix fun StateGuard.or(g2: StateGuard): StateGuard {
     return {input, room -> this.invoke(input, room) || g2(input, room)}
 }
 
-fun actionForGo2(connectionsMap: RoomConnectionsMap,
-                sameRoomEventText: String = "That didn't work!"): (Input, EventLog, Items2) -> Event
+fun actionForGo(connectionsMap: RoomConnectionsMap,
+                sameRoomEventText: String = "That didn't work!"): (Input, EventLog) -> Event
 {
-    return fun(input, eventLog, _): Event {
+    return fun(input, eventLog): Event {
         val currentRoomAndState = eventLog.getCurrentRoomAndState(Player)
         val currentRoom  = currentRoomAndState.first
 

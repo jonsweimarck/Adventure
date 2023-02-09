@@ -18,7 +18,7 @@ data class State (val description: String)
 open class Event(val gameText: String, val roomAndState: Pair<Room, State>, val character: Character = Player)
 open class EndEvent(gameEndText:String, roomAndState: Pair<Room, State>):Event(gameEndText, roomAndState)
 
-open class RoomEvent(gameText: String, roomAndState: Pair<Room, State>, character: Character, ) : Event("${gameText}", roomAndState, character)
+open class RoomEvent(gameText: String, roomAndState: Pair<Room, State>, character: Character, ) : Event("$gameText", roomAndState, character)
 class NewRoomEvent(gameText: String, newRoomAndState: Pair<Room, State>, character: Character, ): RoomEvent(gameText, newRoomAndState, character)
 class SameRoomEvent(gameText: String, newRoomAndState: Pair<Room, State>, character: Character, ): RoomEvent(gameText, newRoomAndState, character)
 class LookAroundEvent(gameText: String, newRoomAndState: Pair<Room, State>, character: Character, ): RoomEvent(gameText, newRoomAndState, character)
@@ -28,13 +28,12 @@ typealias RoomConnectionsMap =  Map<Room, List<Pair<RoomGuard, Room>>>
 
 
 
-class Game2(val connections: RoomConnectionsMap,
-            itemsPlacementMap: ItemsPlacementMap2 = emptyMap(),
-            val actionMap: Map<CommandType, (Input, EventLog, Items2) -> Event> = emptyMap(),
-            val eventlog: EventLog = EventLog(),
-            val nonPlayerCharacters: List<NPC> = emptyList()
+class Game(val connections: RoomConnectionsMap,
+           itemsPlacementMap: ItemsPlacementMap = emptyMap(),
+           val actionMap: Map<CommandType, (Input, EventLog) -> Event> = emptyMap(),
+           val eventlog: EventLog = EventLog(),
+           val nonPlayerCharacters: List<NPC> = emptyList()
 ) {
-    val allItems: Items2 = Items2(itemsPlacementMap)
 
     init {
         itemsPlacementMap.filter { it.value == Carried }.keys
@@ -56,7 +55,7 @@ class Game2(val connections: RoomConnectionsMap,
     fun playerDo(input: Input, eventLog: EventLog): Event {
         return actionMap.getOrElse(input.command) {
             throw Exception("Mama Mia! Undefined command in input ${input.command}")
-        }.invoke(input, eventLog, allItems)
+        }.invoke(input, eventLog)
     }
 }
 

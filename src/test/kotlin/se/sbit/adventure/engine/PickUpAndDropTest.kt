@@ -41,22 +41,22 @@ class PickUpAndDropTest {
     @Test
     fun `can carry item from start`() {
         val eventLog = EventLog.fromList(listOf(NewRoomEvent("start room", Pair(roomA, stateA), Player)))
-        val game = Game2(connectedRooms, itemMap, eventlog = eventLog)
+        val game = Game(connectedRooms, itemMap, eventlog = eventLog)
 
-        expectThat(carriedItems2(game.eventlog)).containsExactly(bottle)
+        expectThat(carriedItems(game.eventlog)).containsExactly(bottle)
     }
 
     @Test
     fun `can pick up item in current room`() {
         val eventLog = EventLog.fromList(listOf(NewRoomEvent("start room", Pair(roomA, stateA), Player)))
-        val game = Game2(connectedRooms, itemMap, eventlog = eventLog)
+        val game = Game(connectedRooms, itemMap, eventlog = eventLog)
 
-        expectThat(carriedItems2(game.eventlog)).containsExactly(bottle)
+        expectThat(carriedItems(game.eventlog)).containsExactly(bottle)
 
-        val resultingEvent = actionForPickUpItem2(sword).invoke(Input(object: CommandType{}), game.eventlog, game.allItems)
+        val resultingEvent = actionForPickUpItem(sword).invoke(Input(object: CommandType{}), game.eventlog)
         game.eventlog.add(resultingEvent)
 
-        expectThat(carriedItems2(game.eventlog)).containsExactlyInAnyOrder(bottle, sword)
+        expectThat(carriedItems(game.eventlog)).containsExactlyInAnyOrder(bottle, sword)
     }
 
 
@@ -64,18 +64,18 @@ class PickUpAndDropTest {
     fun `cannot pick up item from another room`() {
 
         val eventLog = EventLog.fromList(listOf(NewRoomEvent("start room", Pair(roomA, stateA), Player)))
-        val game = Game2(connectedRooms, itemMap, eventlog = eventLog)
+        val game = Game(connectedRooms, itemMap, eventlog = eventLog)
 
-        val result = actionForPickUpItem2(key).invoke(Input(object: CommandType{}), game.eventlog, game.allItems)
+        val result = actionForPickUpItem(key).invoke(Input(object: CommandType{}), game.eventlog)
         expectThat(result).isA<NoSuchItemHereEvent>()
     }
 
     @Test
     fun `cannot pick up item already carried`() {
         val eventLog = EventLog.fromList(listOf(NewRoomEvent("start room", Pair(roomA, stateA), Player)))
-        val game = Game2(connectedRooms, itemMap, eventlog = eventLog)
+        val game = Game(connectedRooms, itemMap, eventlog = eventLog)
 
-        val result = actionForPickUpItem2(bottle).invoke(Input(object: CommandType{}), game.eventlog, game.allItems)
+        val result = actionForPickUpItem(bottle).invoke(Input(object: CommandType{}), game.eventlog)
         expectThat(result).isA<NoSuchItemHereEvent>()
     }
 
@@ -83,23 +83,23 @@ class PickUpAndDropTest {
     fun `can drop carried item`() {
         val eventLog = EventLog.fromList(listOf(NewRoomEvent("start room", Pair(roomA, stateA), Player)))
 
-        val game = Game2(connectedRooms, itemMap, eventlog = eventLog)
+        val game = Game(connectedRooms, itemMap, eventlog = eventLog)
 
-        expectThat(carriedItems2(game.eventlog)).containsExactly(bottle)
+        expectThat(carriedItems(game.eventlog)).containsExactly(bottle)
 
-        val resultingEvent = actionForDropItem2(bottle).invoke(Input(object: CommandType{}), game.eventlog, game.allItems)
+        val resultingEvent = actionForDropItem(bottle).invoke(Input(object: CommandType{}), game.eventlog)
         game.eventlog.add(resultingEvent)
 
-        expectThat(carriedItems2(game.eventlog)).isEmpty()
+        expectThat(carriedItems(game.eventlog)).isEmpty()
     }
 
     @Test
     fun `cannot drop item not carried`() {
 
         val eventLog = EventLog.fromList(listOf(NewRoomEvent("start room", Pair(roomA, stateA), Player)))
-        val game = Game2(connectedRooms, itemMap, eventlog = eventLog)
+        val game = Game(connectedRooms, itemMap, eventlog = eventLog)
 
-        val result = actionForDropItem2(key).invoke(Input(object: CommandType{}), game.eventlog, game.allItems)
+        val result = actionForDropItem(key).invoke(Input(object: CommandType{}), game.eventlog)
         expectThat(result).isA<NoSuchItemToDropItemEvent>()
     }
 

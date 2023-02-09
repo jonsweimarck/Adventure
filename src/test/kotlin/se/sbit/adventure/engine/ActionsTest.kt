@@ -62,25 +62,25 @@ class ActionsTest {
 
     class DancingEvent(roomAndState: Pair<Room, State>): Event("Dance, dance, dance!", roomAndState)
 
-    val actionMap: Map<CommandType, (Input, EventLog, Items2) -> Event> = mapOf(
-        GoCommand.GoEast to actionForGo2(connectedRooms),
-        GoCommand.GoWest to actionForGo2(connectedRooms),
-        GoCommand.GoNorth to actionForGo2(connectedRooms),
-        GoCommand.GoSouth to actionForGo2(connectedRooms),
+    val actionMap: Map<CommandType, (Input, EventLog) -> Event> = mapOf(
+        GoCommand.GoEast to actionForGo(connectedRooms),
+        GoCommand.GoWest to actionForGo(connectedRooms),
+        GoCommand.GoNorth to actionForGo(connectedRooms),
+        GoCommand.GoSouth to actionForGo(connectedRooms),
         ActionCommand.UseKey to ::useKey,
-        ActionCommand.Dance to { _, eventlog, _  -> DancingEvent(eventlog.getCurrentRoomAndState(Player)) }
+        ActionCommand.Dance to { _, eventlog  -> DancingEvent(eventlog.getCurrentRoomAndState(Player)) }
     )
 
 
-    fun useKey(input: Input, eventLog: EventLog, items: Items2): Event {
-        if(!carriedItems2(eventLog).contains(key)){
+    fun useKey(input: Input, eventLog: EventLog): Event {
+        if(!carriedItems(eventLog).contains(key)){
             return NoKeyToBeUsed(eventLog.getCurrentRoomAndState(Player))
         }
 
         if(eventLog.getCurrentRoom(Player) != roomA){
             return NoUsageOfKey(eventLog.getCurrentRoomAndState(Player))
         }
-        val currentKey = carriedItems2(eventLog).first{it == key}
+        val currentKey = carriedItems(eventLog).first{it == key}
 
         if(currentKey.state(eventLog) == usedKeyState) {
             return KeyAlreadyUsed(eventLog.getCurrentRoomAndState(Player))
@@ -93,7 +93,7 @@ class ActionsTest {
     @Test
     fun `can do an action in any room without carrying any item`() {
         val eventLog = EventLog.fromList(listOf(NewRoomEvent("", Pair(roomA, stateA), Player))) // <- simple eventlog with only the start room/state
-        val game = Game2(connectedRooms, placementMap, actionMap, eventlog = eventLog)
+        val game = Game(connectedRooms, placementMap, actionMap, eventlog = eventLog)
 
         val event = game.playerDo(Input(ActionCommand.Dance), game.eventlog)
         expectThat(event).isA<DancingEvent>()
@@ -102,10 +102,10 @@ class ActionsTest {
     @Test
     fun `must carry an item to do an action`() {
         val eventLog = EventLog.fromList(listOf(NewRoomEvent("", Pair(roomA, stateA), Player))) // <- simple eventlog with only the start room/state
-        val game = Game2(connectedRooms, placementMap, actionMap, eventlog = eventLog)
+        val game = Game(connectedRooms, placementMap, actionMap, eventlog = eventLog)
 
 
-        expectThat(carriedItems2(game.eventlog)).contains(key)
+        expectThat(carriedItems(game.eventlog)).contains(key)
         val event = game.playerDo(Input(ActionCommand.UseKey), game.eventlog)
         expectThat(event).isA<KeyUsedSuccessfully>()
     }
@@ -113,15 +113,15 @@ class ActionsTest {
     @Test
     fun `can do action that changes state of carried item`() {
         val eventLog = EventLog.fromList(listOf(NewRoomEvent("", Pair(roomA, stateA), Player))) // <- simple eventlog with only the start room/state
-        val game = Game2(connectedRooms, placementMap, actionMap, eventlog = eventLog)
+        val game = Game(connectedRooms, placementMap, actionMap, eventlog = eventLog)
 
-        expectThat(carriedItems2(game.eventlog)).contains(key)
+        expectThat(carriedItems(game.eventlog)).contains(key)
         expectThat(key.state(game.eventlog)).isEqualTo(unusedKeyState)
 
         val resultingEvent = game.playerDo(Input(ActionCommand.UseKey), game.eventlog)
         game.eventlog.add(resultingEvent)
 
-        expectThat(carriedItems2(game.eventlog)).contains(key)
+        expectThat(carriedItems(game.eventlog)).contains(key)
         expectThat(key.state(game.eventlog)).isEqualTo(usedKeyState)
     }
 
@@ -131,12 +131,12 @@ class ActionsTest {
         val currentRoom = roomA
         val currentState = stateA
         val eventLog = EventLog.fromList(listOf(NewRoomEvent("", Pair(currentRoom, currentState), Player))) // <- simple eventlog with only the start room/state
-        val game = Game2(connectedRooms, placementMap, actionMap, eventlog = eventLog)
+        val game = Game(connectedRooms, placementMap, actionMap, eventlog = eventLog)
 
         // Drop the key
-        val resultingEvent = actionForDropItem2(key).invoke(Input(object: CommandType{}), game.eventlog, game.allItems )
+        val resultingEvent = actionForDropItem(key).invoke(Input(object: CommandType{}), game.eventlog )
         game.eventlog.add(resultingEvent)
-        expectThat(carriedItems2(game.eventlog)).doesNotContain(key)
+        expectThat(carriedItems(game.eventlog)).doesNotContain(key)
         // Try to use it
         val event = game.playerDo(Input(ActionCommand.UseKey), game.eventlog)
         expectThat(event).isA<NoKeyToBeUsed>()
@@ -147,9 +147,9 @@ class ActionsTest {
         val currentRoom = roomB     // <- starts in roomB where the key can't be used
         val currentState = stateB
         val eventLog = EventLog.fromList(listOf(NewRoomEvent("", Pair(currentRoom, currentState), Player))) // <- simple eventlog with only the start room/state
-        val game = Game2(connectedRooms, placementMap, actionMap, eventlog = eventLog)
+        val game = Game(connectedRooms, placementMap, actionMap, eventlog = eventLog)
 
-        expectThat(carriedItems2(game.eventlog)).contains(key)
+        expectThat(carriedItems(game.eventlog)).contains(key)
         val event = game.playerDo(Input(ActionCommand.UseKey), game.eventlog)
         expectThat(event).isA<NoUsageOfKey>()
     }
