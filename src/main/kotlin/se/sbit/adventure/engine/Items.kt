@@ -4,6 +4,7 @@ package se.sbit.adventure.engine
 typealias ItemsPlacementMap = Map<ItemType, Placement>
 typealias ItemsPlacementMap2 = Map<Item, Placement>
 
+@Deprecated("")
 interface ItemType {
     val description: String
 }
@@ -86,7 +87,7 @@ fun actionForExamineItem(itemToExam: ItemType, successGameText: String= "You don
         }
 
 fun actionForExamineItem2(itemToExam: Item, successGameText: String= "You don't see anything special", failureGameText:String = "You don't carry that" ): (Input, EventLog, Items2) -> Event =
-    fun(_, eventLog, items): Event =
+    fun(_, eventLog, _): Event =
         when(carriedItems2(eventLog).contains(itemToExam)) {
             true -> Event(successGameText, eventLog.getCurrentRoomAndState(Player))
             false -> Event(failureGameText, eventLog.getCurrentRoomAndState(Player))
@@ -114,7 +115,7 @@ fun actionForDropItem2(itemToDrop:Item, noSuchItemToDropEventText: String = "Tha
     }
 
 }
-
+@Deprecated("")
 fun goActionForInventory(notCarryingAnythingEventText: String = "You don't carry anything!", carryingEventText: String = "You carry"): (Input, EventLog, Items) -> Event
 {
     return fun(_, eventLog, items): Event {
@@ -122,6 +123,16 @@ fun goActionForInventory(notCarryingAnythingEventText: String = "You don't carry
             return InventoryEvent(notCarryingAnythingEventText,eventLog.getCurrentRoomAndState(Player))
         }
         return InventoryEvent( "${carryingEventText} ${carriedItems(eventLog).joinToString { it.description }}", eventLog.getCurrentRoomAndState(Player))
+    }
+}
+
+fun goActionForInventory2(notCarryingAnythingEventText: String = "You don't carry anything!", carryingEventText: String = "You carry"): (Input, EventLog, Items2) -> Event
+{
+    return fun(_, eventLog, items): Event {
+        if (carriedItems2(eventLog).isEmpty()) {
+            return InventoryEvent(notCarryingAnythingEventText,eventLog.getCurrentRoomAndState(Player))
+        }
+        return InventoryEvent( "${carryingEventText} ${carriedItems2(eventLog).joinToString { it.description(eventLog) }}", eventLog.getCurrentRoomAndState(Player))
     }
 }
 
@@ -198,6 +209,7 @@ fun carriedItems(eventLog: EventLog): List<ItemType> {
 
 
 
+@Deprecated("")
 class Items(initialItemMap: ItemsPlacementMap) {
 
     private val itemMap: MutableMap<ItemType, Placement> = initialItemMap.toMutableMap()
