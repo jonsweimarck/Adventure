@@ -237,7 +237,8 @@ val oldMan: NPC = object: NPC("en gubbe") {
         }
 }
 
-val npcs = listOf(oldMan)
+// List of NPCs and where they start.
+val npcs = listOf(Pair(oldMan, Pair(startRoom, startState)))
 
 
 fun useKey(input: Input, eventLog: EventLog): Event {
@@ -335,13 +336,11 @@ fun takeLamp(input: Input, eventLog: EventLog): Event =
 fun main() {
     println("**************  Simple Adventure ****************")
 
-    // Must have starting NewRoomEvent for both player and NPC so the game can figure out where the player starts
-    var npcEvent: Event = NewRoomEvent("NPC", Pair(startRoom, startState), oldMan)
+    // Must have starting NewRoomEvent for the player so the game can figure out where the player starts
     var playerEvent: Event = NewRoomEvent("Welcome!\n", Pair(startRoom, startState), Player)
-    eventLog.add(npcEvent)
     eventLog.add(playerEvent)
 
-    val game = Game(connectedRooms, placementMap, actionMap, eventLog,  nonPlayerCharacters = npcs)
+    val game = Game(connectedRooms, placementMap, actionMap, eventLog,  nonPlayerCharactersWithStartRooms = npcs)
 
     print("${eventLog.log()}\n")
 
@@ -365,10 +364,8 @@ fun main() {
         val input:String = StandardInOut.waitForInput()
         playerEvent = game.playerDo(Input(Interpreter.interpret(input, input2Command, ActionCommand.GibberishInput)), game.eventlog)
         eventLog.add(playerEvent)
-//        print("${eventLog.log()}\n")
 
          game.nonPlayerCharacters.forEach{ eventLog.add(it.doAction(game.eventlog)) }
-//        print("${eventLog.log()}\n")
     }
 
     StandardInOut.showText(playerEvent.gameText)

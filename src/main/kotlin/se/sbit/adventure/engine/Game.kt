@@ -1,6 +1,7 @@
 package se.sbit.adventure.engine
 
 
+
 interface CommandType
 
 enum class GoCommand: CommandType {
@@ -32,8 +33,9 @@ class Game(val connections: RoomConnectionsMap,
            itemsPlacementMap: ItemsPlacementMap = emptyMap(),
            val actionMap: Map<CommandType, (Input, EventLog) -> Event> = emptyMap(),
            val eventlog: EventLog = EventLog(),
-           val nonPlayerCharacters: List<NPC> = emptyList()
+           nonPlayerCharactersWithStartRooms: List<Pair<NPC, Pair<Room, State>>> = emptyList()
 ) {
+    val nonPlayerCharacters: List<NPC> = nonPlayerCharactersWithStartRooms.map { it.first }
 
     init {
         itemsPlacementMap.filter { it.value == Carried }.keys
@@ -43,7 +45,12 @@ class Game(val connections: RoomConnectionsMap,
         itemsPlacementMap.filter { it.value is InRoom }
             .map { DroppedItemEvent("Dropped from start", roomAndStateFor(it), Player, it.key) }
             .forEach { eventlog.add(it) }
+
+        // Add a NewRoomEvent for each NPC
+        nonPlayerCharactersWithStartRooms.forEach { eventlog.add(NewRoomEvent("NPC: ${it.first.description}", Pair(it.second.first, it.second.second), it.first)) }
     }
+
+
 
     private fun roomAndStateFor(entry: Map.Entry<Item, Placement>): Pair<Room, State> {
         val room = (entry.value as InRoom).room
