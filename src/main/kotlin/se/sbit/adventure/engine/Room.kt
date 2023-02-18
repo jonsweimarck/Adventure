@@ -1,6 +1,6 @@
 package se.sbit.adventure.engine
 
-data class Room(val states: List<Pair<(Input, Room) ->Boolean, RoomState>>)
+data class Room(val states: List<Pair<RoomStateGuard, RoomState>>)
 data class RoomState (val description: String)
 
 
@@ -10,7 +10,6 @@ class SameRoomEvent(gameText: String, newRoomAndState: Pair<Room, RoomState>, ch
 
 typealias RoomGuard = (Input) -> Boolean
 typealias RoomStateGuard = (Input, Room) -> Boolean
-typealias RoomConnectionsMap =  Map<Room, List<Pair<RoomGuard, Room>>>
 
 val north: RoomGuard = { input -> (input.command == GoCommand.GoNorth)}
 val east: RoomGuard = { input -> (input.command == GoCommand.GoEast)}
@@ -34,7 +33,7 @@ infix fun RoomStateGuard.or(g2: RoomStateGuard): RoomStateGuard {
     return {input, room -> this.invoke(input, room) || g2(input, room)}
 }
 
-fun actionForGo(connectionsMap: RoomConnectionsMap,
+fun actionForGo(connectionsMap: Map<Room, List<Pair<RoomGuard, Room>>>,
                 sameRoomEventText: String = "That didn't work!"): (Input, EventLog) -> Event
 {
     return fun(input, eventLog): Event {

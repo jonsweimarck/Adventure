@@ -91,7 +91,7 @@ fun exitRoom(input: Input): Boolean = input.command == ActionCommand.ExitHouse
 
 
 // All Items, as well as where they are placed
-class MiscItems(description: String): SinglestateItem(ItemState(description))
+class MiscItems(description: String): SingleStateItem(ItemState(description))
 val receipt = MiscItems("ett kvitto")
 val chainsaw = MiscItems("en motorsåg")
 
@@ -104,7 +104,7 @@ val keyStates = listOf(
     Pair(::keyIsNotUsed, unusedKeyState),
     Pair(::keyIsUsed, usedKeyState))
 
-val key = MultistateItem(keyStates)
+val key = MultiStateItem(keyStates)
 
 
 private var placementMap: Map<Item, Placement> = mapOf(
@@ -141,7 +141,7 @@ enum class ActionCommand: CommandType {
 }
 
 
-val stringinput2Command: Map<String, CommandType> = mapOf (
+val stringInputCommand: Map<String, CommandType> = mapOf (
     "((gå (åt )?)?s(öder)?|gå söderut)" to GoCommand.GoSouth,
     "((gå (åt )?)?n(orr)?|gå söderut)" to GoCommand.GoNorth,
     "(exit( game)?|(av)?sluta|bye|hej( då|då))" to ActionCommand.EndGame,
@@ -168,7 +168,7 @@ val stringinput2Command: Map<String, CommandType> = mapOf (
     "(krossa |slå sönder |mosa ).*" to ActionCommand.Smash,
 )
 
-val input2Command = stringinput2Command.entries.associate { Pair(it.key.toRegex(RegexOption.IGNORE_CASE), it.value) }
+val inputCommand = stringInputCommand.entries.associate { Pair(it.key.toRegex(RegexOption.IGNORE_CASE), it.value) }
 
 // Mapping user inputs to what event-returning function to run
 class KeyUsedSuccessfully(currentRoom: Room, newState: RoomState) : RoomEvent("Du låser upp och öppnar dörren.", Pair(currentRoom, newState), Player)
@@ -361,7 +361,7 @@ fun main() {
 
 
         val input:String = StandardInOut.waitForInput()
-        playerEvent = game.playerDo(Input(Interpreter.interpret(input, input2Command, ActionCommand.GibberishInput)), game.eventlog)
+        playerEvent = game.playerDo(Input(Interpreter.interpret(input, inputCommand, ActionCommand.GibberishInput)), game.eventlog)
         eventLog.add(playerEvent)
 
          game.nonPlayerCharacters.forEach{ eventLog.add(it.doAction(game.eventlog)) }

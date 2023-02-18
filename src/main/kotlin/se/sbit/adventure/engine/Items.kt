@@ -1,5 +1,7 @@
 package se.sbit.adventure.engine
 
+typealias ItemStateGuard = (EventLog) -> Boolean
+
 interface Item {
     fun description(eventLog: EventLog): String
     fun state(eventLog: EventLog): ItemState
@@ -7,12 +9,12 @@ interface Item {
 
 data class ItemState(val description: String)
 
-abstract class SinglestateItem(private val state: ItemState):Item {
+abstract class SingleStateItem(private val state: ItemState):Item {
     override fun state(eventLog: EventLog): ItemState = state
     override fun description(eventLog: EventLog): String = state.description
 }
 
-open class MultistateItem (private val states: List<Pair<(EventLog)-> Boolean,  ItemState> >): Item {
+open class MultiStateItem (private val states: List<Pair<ItemStateGuard,  ItemState> >): Item {
 
     override fun description(eventLog: EventLog): String =
         state(eventLog).description
@@ -24,17 +26,11 @@ open class MultistateItem (private val states: List<Pair<(EventLog)-> Boolean,  
         }
 }
 
-typealias ItemsPlacementMap = Map<Item, Placement>
-
-sealed class Placement
-object Carried : Placement()
-data class InRoom(val room: Room): Placement()
 
 abstract class ItemPickedOrDropped(gameText: String, roomAndState: Pair<Room, RoomState>, character: Character, val item: Item ): Event(gameText, roomAndState, character)
-
-
 class DroppedItemEvent(gameText: String, roomAndState: Pair<Room, RoomState>, character: Character, item: Item):ItemPickedOrDropped(gameText,roomAndState, character, item)
 class PickedUpItemEvent(gameText: String, roomAndState: Pair<Room, RoomState>, character: Character, item: Item):ItemPickedOrDropped(gameText, roomAndState, character, item)
+
 class NoSuchItemHereEvent(gameText: String, roomAndState: Pair<Room, RoomState>):Event(gameText, roomAndState)
 class NoSuchItemToDropItemEvent(gameText: String, roomAndState: Pair<Room, RoomState>):Event(gameText, roomAndState)
 class InventoryEvent(gameText: String, roomAndState: Pair<Room, RoomState>):Event(gameText, roomAndState)

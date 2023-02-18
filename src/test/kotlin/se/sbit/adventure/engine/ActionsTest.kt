@@ -24,7 +24,7 @@ class ActionsTest {
 
 
     //    // All Items, as well as where they are placed
-    class MiscItems(description: String): SinglestateItem(ItemState(description))
+    class MiscItems(description: String): SingleStateItem(ItemState(description))
     private val sword = MiscItems("ett svärd")
     private val bottle = MiscItems("en flaska")
 
@@ -36,7 +36,7 @@ class ActionsTest {
     private val usedKeyPredicate:Pair<(EventLog)-> Boolean,  ItemState> = Pair(::keyIsUsed, usedKeyState)
     val keyStates = listOf(unusedKeyPredicate, usedKeyPredicate)
 
-    val key = MultistateItem(keyStates)
+    val key = MultiStateItem(keyStates)
 
 
     private var placementMap: Map<Item, Placement> = mapOf(

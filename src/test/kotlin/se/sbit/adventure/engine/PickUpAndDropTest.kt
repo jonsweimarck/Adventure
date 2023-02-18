@@ -27,7 +27,7 @@ class PickUpAndDropTest {
     )
 
 
-    class TestItems(description: String): SinglestateItem(ItemState(description))
+    class TestItems(description: String): SingleStateItem(ItemState(description))
     private val sword = TestItems("ett svärd")
     private val bottle = TestItems("en flaska")
     private val key = TestItems("en nyckel")

@@ -1,11 +1,14 @@
 package se.sbit.adventure.engine
 
+sealed class Placement
+object Carried : Placement()
+data class InRoom(val room: Room): Placement()
 
 open class EndEvent(gameEndText:String, roomAndState: Pair<Room, RoomState>):Event(gameEndText, roomAndState)
 
 
-class Game(val connections: RoomConnectionsMap,
-           itemsPlacementMap: ItemsPlacementMap = emptyMap(),
+class Game(val connections: Map<Room, List<Pair<RoomGuard, Room>>>,
+           itemsPlacementMap: Map<Item, Placement> = emptyMap(),
            val actionMap: Map<CommandType, (Input, EventLog) -> Event> = emptyMap(),
            val eventlog: EventLog = EventLog(),
            nonPlayerCharactersWithStartRooms: List<Pair<NPC, Pair<Room, RoomState>>> = emptyList()
