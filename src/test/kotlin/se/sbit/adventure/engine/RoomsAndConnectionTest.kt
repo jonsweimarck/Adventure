@@ -19,11 +19,11 @@ class RoomsAndConnectionTest {
     val alwaysPass = { _: Input, _: Room -> true}
     val alwaysStop = { _: Input, _: Room -> false}
 
-    val stateA = State("a")
-    val stateB = State("b")
-    val stateC = State("c")
-    val stateD1 = State("d1")
-    val stateD2 = State("d2")
+    val stateA = RoomState("a")
+    val stateB = RoomState("b")
+    val stateC = RoomState("c")
+    val stateD1 = RoomState("d1")
+    val stateD2 = RoomState("d2")
     val roomA = Room(listOf(Pair(alwaysPass, stateA)))
     val roomB = Room(listOf(Pair(alwaysPass, stateB)))
     val roomC = Room(listOf(Pair(alwaysPass, stateC)))
@@ -119,14 +119,14 @@ class RoomsAndConnectionTest {
         @Test
         fun `can randomly chose a connected room`(){
 
-            // Setting up RoomA connected to B, C, D. But roomD can't actually be chosen because it's only State's StateGuard can not be passed
+            // Setting up RoomA connected to B, C, D. But roomD can't actually be chosen because it's only RoomState's RoomStateGuard can not be passed
             val alwaysPass = { _: Input, _: Room -> true}
             val alwaysStop = { _: Input, _: Room -> false}
 
-            val stateA = State("a")
-            val stateB = State("b")
-            val stateC = State("c")
-            val stateD = State("d")
+            val stateA = RoomState("a")
+            val stateB = RoomState("b")
+            val stateC = RoomState("c")
+            val stateD = RoomState("d")
             val roomA = Room(listOf(Pair(alwaysPass, stateA)))
             val roomB = Room(listOf(Pair(alwaysPass, stateB)))
             val roomC = Room(listOf(Pair(alwaysPass, stateC)))

@@ -16,8 +16,8 @@ class PickUpAndDropTest {
     // Setting up two rooms, connected North-South
     // Each room has just a single state
     private val alwaysPass = { _: Input, _: Room -> true}
-    private val stateA = State("a")
-    private val stateB = State("b")
+    private val stateA = RoomState("a")
+    private val stateB = RoomState("b")
     private val roomA = Room(listOf(Pair(alwaysPass, stateA)))
     private val roomB = Room(listOf(Pair(alwaysPass, stateB)))
 
@@ -27,7 +27,7 @@ class PickUpAndDropTest {
     )
 
 
-    class TestItems(description: String): SinglestateItem(Itemstate(description))
+    class TestItems(description: String): SinglestateItem(ItemState(description))
     private val sword = TestItems("ett svärd")
     private val bottle = TestItems("en flaska")
     private val key = TestItems("en nyckel")

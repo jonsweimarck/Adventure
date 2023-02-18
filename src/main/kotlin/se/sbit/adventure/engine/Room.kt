@@ -1,8 +1,16 @@
 package se.sbit.adventure.engine
 
+data class Room(val states: List<Pair<(Input, Room) ->Boolean, RoomState>>)
+data class RoomState (val description: String)
+
+
+open class RoomEvent(gameText: String, roomAndState: Pair<Room, RoomState>, character: Character) : Event(gameText, roomAndState, character)
+class NewRoomEvent(gameText: String, newRoomAndState: Pair<Room, RoomState>, character: Character): RoomEvent(gameText, newRoomAndState, character)
+class SameRoomEvent(gameText: String, newRoomAndState: Pair<Room, RoomState>, character: Character): RoomEvent(gameText, newRoomAndState, character)
 
 typealias RoomGuard = (Input) -> Boolean
-typealias StateGuard = (Input, Room) -> Boolean
+typealias RoomStateGuard = (Input, Room) -> Boolean
+typealias RoomConnectionsMap =  Map<Room, List<Pair<RoomGuard, Room>>>
 
 val north: RoomGuard = { input -> (input.command == GoCommand.GoNorth)}
 val east: RoomGuard = { input -> (input.command == GoCommand.GoEast)}
@@ -18,11 +26,11 @@ infix fun RoomGuard.or(g2: RoomGuard): RoomGuard {
 }
 
 
-infix fun StateGuard.and(g2: StateGuard): StateGuard {
+infix fun RoomStateGuard.and(g2: RoomStateGuard): RoomStateGuard {
     return {input, room -> this.invoke(input, room) && g2(input, room)}
 }
 
-infix fun StateGuard.or(g2: StateGuard): StateGuard {
+infix fun RoomStateGuard.or(g2: RoomStateGuard): RoomStateGuard {
     return {input, room -> this.invoke(input, room) || g2(input, room)}
 }
 
@@ -75,5 +83,3 @@ fun goWherePossible(roomConnections: Map<Room, List<Room>>, eventLog: EventLog, 
     }
     return SameRoomEvent("No possible state to enter", currentRoomAndState, character)
 }
-
-

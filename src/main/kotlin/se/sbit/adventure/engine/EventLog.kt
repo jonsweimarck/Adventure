@@ -1,5 +1,9 @@
 package se.sbit.adventure.engine
 
+
+open class Event(val gameText: String, val roomAndState: Pair<Room, RoomState>, val character: Character = Player)
+class LookAroundEvent(gameText: String, newRoomAndState: Pair<Room, RoomState>, character: Character): RoomEvent(gameText, newRoomAndState, character)
+
 class EventLog {
     private var events: List<Event> = emptyList()
 
@@ -12,12 +16,12 @@ class EventLog {
 
 
 
-    fun getCurrentRoomAndState(character: Character): Pair<Room, State> {
+    fun getCurrentRoomAndState(character: Character): Pair<Room, RoomState> {
         val lastNewRoom = events.filterIsInstance<RoomEvent>().last { it.character == character }
         return lastNewRoom.roomAndState
     }
     fun getCurrentRoom(character: Character): Room  = getCurrentRoomAndState(character).first
-    fun getCurrentState(character: Character): State  = getCurrentRoomAndState(character).second
+    fun getCurrentRoomState(character: Character): RoomState  = getCurrentRoomAndState(character).second
 
     fun getNumberOfTurnsSinceEnteredCurrentRoom(character: Character): Int =
         events.filter { it.character == character }.takeLastWhile { it !is NewRoomEvent}.size +1

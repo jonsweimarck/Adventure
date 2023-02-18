@@ -12,8 +12,8 @@ class ActionsTest {
     // Setting up two rooms, connected North-South
     // Each room has just a single state
     private val alwaysPass = { _: Input, _: Room -> true}
-    private val stateA = State("a")
-    private val stateB = State("b")
+    private val stateA = RoomState("a")
+    private val stateB = RoomState("b")
     private val roomA = Room(listOf(Pair(alwaysPass, stateA)))
     private val roomB = Room(listOf(Pair(alwaysPass, stateB)))
 
@@ -24,16 +24,16 @@ class ActionsTest {
 
 
     //    // All Items, as well as where they are placed
-    class MiscItems(description: String): SinglestateItem(Itemstate(description))
+    class MiscItems(description: String): SinglestateItem(ItemState(description))
     private val sword = MiscItems("ett svärd")
     private val bottle = MiscItems("en flaska")
 
     private fun keyIsNotUsed(eventLog: EventLog): Boolean = eventLog.log().none { it is KeyUsedSuccessfully }
     private fun keyIsUsed(eventLog: EventLog): Boolean = ! keyIsNotUsed(eventLog)
-    private val unusedKeyState = Itemstate("Oanvänd nyckel")
-    private val usedKeyState = Itemstate("Använd nyckel")
-    private val unusedKeyPredicate:Pair<(EventLog)-> Boolean,  Itemstate> = Pair(::keyIsNotUsed, unusedKeyState)
-    private val usedKeyPredicate:Pair<(EventLog)-> Boolean,  Itemstate> = Pair(::keyIsUsed, usedKeyState)
+    private val unusedKeyState = ItemState("Oanvänd nyckel")
+    private val usedKeyState = ItemState("Använd nyckel")
+    private val unusedKeyPredicate:Pair<(EventLog)-> Boolean,  ItemState> = Pair(::keyIsNotUsed, unusedKeyState)
+    private val usedKeyPredicate:Pair<(EventLog)-> Boolean,  ItemState> = Pair(::keyIsUsed, usedKeyState)
     val keyStates = listOf(unusedKeyPredicate, usedKeyPredicate)
 
     val key = MultistateItem(keyStates)
@@ -53,14 +53,14 @@ class ActionsTest {
 
     // Mapping user inputs to what event-returning function to run
     // ** Events **
-    class KeyUsedSuccessfully(roomAndState: Pair<Room, State>) : Event("The key was used successfully!", roomAndState)
-    class KeyAlreadyUsed(roomAndState: Pair<Room, State>) : Event("You have already used the key", roomAndState)
-    class NoUsageOfKey(roomAndState: Pair<Room, State>) : Event("You cannot use the key here!", roomAndState)
-    class NoKeyToBeUsed(roomAndState: Pair<Room, State>) : Event("You havn't got a key, have you?", roomAndState)
+    class KeyUsedSuccessfully(roomAndState: Pair<Room, RoomState>) : Event("The key was used successfully!", roomAndState)
+    class KeyAlreadyUsed(roomAndState: Pair<Room, RoomState>) : Event("You have already used the key", roomAndState)
+    class NoUsageOfKey(roomAndState: Pair<Room, RoomState>) : Event("You cannot use the key here!", roomAndState)
+    class NoKeyToBeUsed(roomAndState: Pair<Room, RoomState>) : Event("You havn't got a key, have you?", roomAndState)
 
-    class ThingUsedSuccessfully(roomAndState: Pair<Room, State>) : Event("The Thing was used successfully!", roomAndState)
+    class ThingUsedSuccessfully(roomAndState: Pair<Room, RoomState>) : Event("The Thing was used successfully!", roomAndState)
 
-    class DancingEvent(roomAndState: Pair<Room, State>): Event("Dance, dance, dance!", roomAndState)
+    class DancingEvent(roomAndState: Pair<Room, RoomState>): Event("Dance, dance, dance!", roomAndState)
 
     val actionMap: Map<CommandType, (Input, EventLog) -> Event> = mapOf(
         GoCommand.GoEast to actionForGo(connectedRooms),

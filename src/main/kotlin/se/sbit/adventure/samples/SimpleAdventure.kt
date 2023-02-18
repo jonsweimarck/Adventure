@@ -4,43 +4,43 @@ import se.sbit.adventure.engine.*
 
 
 // *********************  Rooms and what States each room can be in ***********************
-private val gardenWithHedge = State(
+private val gardenWithHedge = RoomState(
     """
         |Du står på en gräsmatta i en villaträdgård. 
         |Trädgården har höga häckar åt tre väderstreck, och åt söder ligger villan.
     """.trimMargin())
-private val inFrontOfClosedDoor = State(
+private val inFrontOfClosedDoor = RoomState(
     """
         |Du står på ett trädäck framför en villa. 
         |En stängd dörr leder in i huset.
     """.trimMargin())
 
-private val inFrontOfOpenDoor = State(
+private val inFrontOfOpenDoor = RoomState(
     """
         |Du står på ett trädäck framför en villa. 
         |En öppen dörr leder in i huset.
     """.trimMargin())
 
-private val darkRoom = State(
+private val darkRoom = RoomState(
     """
         |Du står i ett alldeles mörkt rum. Du kan ana en golvlampa vid din ena sida, men allt är verkligen svårt att se.
         |Åt norr leder den öppna dörren ut ur huset.
     """.trimMargin())
 
-private val litRoom = State(
+private val litRoom = RoomState(
     """
         |Du står i ett rum endast upplyst av en golvlampa.
         |Åt norr leder den öppna dörren ut ur huset.
     """.trimMargin())
 
-private val gardenWithSawnDownHedge = State(
+private val gardenWithSawnDownHedge = RoomState(
     """
         |Du står på en gräsmatta i en villaträdgård. 
         |Trädgården har osågningsbara höga häckar åt väster och öster, och åt söder ligger villan.
         |Åt norr har du sågat ner hela häcken.
     """.trimMargin())
 
-private val endState = State(
+private val endState = RoomState(
     """
         |Du står på allmänningen i villaområdet!
         |Att komma hit var tydligen meningen med spelet. 
@@ -91,15 +91,15 @@ fun exitRoom(input: Input): Boolean = input.command == ActionCommand.ExitHouse
 
 
 // All Items, as well as where they are placed
-class MiscItems(description: String): SinglestateItem(Itemstate(description))
+class MiscItems(description: String): SinglestateItem(ItemState(description))
 val receipt = MiscItems("ett kvitto")
 val chainsaw = MiscItems("en motorsåg")
 
 
 private fun keyIsNotUsed(eventLog: EventLog): Boolean = eventLog.log().none { it is KeyUsedSuccessfully }
 private fun keyIsUsed(eventLog: EventLog): Boolean = ! keyIsNotUsed(eventLog)
-private val unusedKeyState = Itemstate("en nyckel")
-private val usedKeyState = Itemstate("en typiskt använd nyckel")
+private val unusedKeyState = ItemState("en nyckel")
+private val usedKeyState = ItemState("en typiskt använd nyckel")
 val keyStates = listOf(
     Pair(::keyIsNotUsed, unusedKeyState),
     Pair(::keyIsUsed, usedKeyState))
@@ -171,13 +171,13 @@ val stringinput2Command: Map<String, CommandType> = mapOf (
 val input2Command = stringinput2Command.entries.associate { Pair(it.key.toRegex(RegexOption.IGNORE_CASE), it.value) }
 
 // Mapping user inputs to what event-returning function to run
-class KeyUsedSuccessfully(currentRoom: Room, newState: State) : RoomEvent("Du låser upp och öppnar dörren.", Pair(currentRoom, newState), Player)
+class KeyUsedSuccessfully(currentRoom: Room, newState: RoomState) : RoomEvent("Du låser upp och öppnar dörren.", Pair(currentRoom, newState), Player)
 object KeyAlreadyUsed : Event("Du har redan låst upp dörren.", eventLog.getCurrentRoomAndState(Player))
 object NoUsageOfKey : Event("Du kan inte använda en nyckel här.", eventLog.getCurrentRoomAndState(Player))
 object NoKeyToBeUsed : Event("Du har väl ingen nyckel?", eventLog.getCurrentRoomAndState(Player))
 
-class SwitchedLightOnEvent(currentRoom: Room, newState: State): RoomEvent("Nu blev det ljust!", Pair(currentRoom, newState), Player)
-class SwitchedLightOffEvent(currentRoom: Room, newState: State): RoomEvent("Nu blev det mörkt igen!", Pair(currentRoom, newState), Player)
+class SwitchedLightOnEvent(currentRoom: Room, newState: RoomState): RoomEvent("Nu blev det ljust!", Pair(currentRoom, newState), Player)
+class SwitchedLightOffEvent(currentRoom: Room, newState: RoomState): RoomEvent("Nu blev det mörkt igen!", Pair(currentRoom, newState), Player)
 
 class HedgeSawnDownEvent:RoomEvent("Vroooooom! Du sågar ner häcken som värsta trädgårdsmästaren!", Pair(garden, gardenWithSawnDownHedge), Player)
 
@@ -245,7 +245,7 @@ fun useKey(input: Input, eventLog: EventLog): Event {
     if(! carriedItems(eventLog).contains(key)){
         return NoKeyToBeUsed
     }
-    if(eventLog.getCurrentState(Player) != inFrontOfClosedDoor){
+    if(eventLog.getCurrentRoomState(Player) != inFrontOfClosedDoor){
         return NoUsageOfKey
     }
 
@@ -282,7 +282,7 @@ fun examineKey(input: Input, eventLog: EventLog): Event =
     }
 
 fun lookIn2(input: Input, eventLog: EventLog): Event =
-    when(eventLog.getCurrentState(Player)){
+    when(eventLog.getCurrentRoomState(Player)){
         inFrontOfOpenDoor  -> if (lightIsOn(input,  eventLog.getCurrentRoom(Player))) {
             SameRoomEvent("Du ser knappt något eftersom det enda ljuset kommer från en liten golvlampa.", eventLog.getCurrentRoomAndState(Player), Player)
         } else {
@@ -294,21 +294,21 @@ fun lookIn2(input: Input, eventLog: EventLog): Event =
 
 
 fun switchOnLight(input: Input, eventLog: EventLog): Event =
-    when(eventLog.getCurrentState(Player)){
+    when(eventLog.getCurrentRoomState(Player)){
         litRoom -> SameRoomEvent("Det är redan tänt, dumhuvve!", eventLog.getCurrentRoomAndState(Player),  Player)
         darkRoom -> SwitchedLightOnEvent(eventLog.getCurrentRoom(Player), litRoom)
         else -> SameRoomEvent("Här? Hur då?", eventLog.getCurrentRoomAndState(Player), Player)
     }
 
 fun switchOffLight(input: Input, eventLog: EventLog): Event =
-    when(eventLog.getCurrentState(Player)){
+    when(eventLog.getCurrentRoomState(Player)){
         darkRoom -> SameRoomEvent("Den är redan släckt, men det kanske du inte ser eftersom det är så mörkt, haha!", eventLog.getCurrentRoomAndState(Player), Player)
         litRoom -> SwitchedLightOffEvent(eventLog.getCurrentRoom(Player), darkRoom)
         else -> SameRoomEvent("Här? Hur då?", eventLog.getCurrentRoomAndState(Player), Player)
     }
 
 fun takeChainsawOrDie(input: Input, eventLog: EventLog): Event =
-    if (eventLog.getCurrentState(Player) == darkRoom && itemsIn(inside, eventLog).contains(chainsaw))
+    if (eventLog.getCurrentRoomState(Player) == darkRoom && itemsIn(inside, eventLog).contains(chainsaw))
     {
         EndEvent("Du ser inte vad du gör i mörkret! Hoppsan, du råkar sätta på den! Oj! Aj! \nDu blev till en hög av blod!", eventLog.getCurrentRoomAndState(Player))
     } else {
@@ -317,7 +317,7 @@ fun takeChainsawOrDie(input: Input, eventLog: EventLog): Event =
 
 fun sawDownHedge(input: Input, eventLog: EventLog): Event =
     if(carriedItems(eventLog).contains(chainsaw)){
-        when(eventLog.getCurrentState(Player)){
+        when(eventLog.getCurrentRoomState(Player)){
             gardenWithSawnDownHedge -> SameRoomEvent("De kvarvarande häckarna går inte att såga ner av någon mystisk anledning.", eventLog.getCurrentRoomAndState(Player), Player)
             gardenWithHedge -> HedgeSawnDownEvent()
             else -> SameRoomEvent("Du sätter igång motorsågen och viftar med den i luften. Wrooom, wroom! Du känner inte för att såga i något av det du ser, så du stänger av den igen.", eventLog.getCurrentRoomAndState(Player), Player)
@@ -327,7 +327,7 @@ fun sawDownHedge(input: Input, eventLog: EventLog): Event =
     }
 
 fun takeLamp(input: Input, eventLog: EventLog): Event =
-    when(eventLog.getCurrentState(Player)){
+    when(eventLog.getCurrentRoomState(Player)){
         litRoom, darkRoom -> Event("Du rycker och sliter, men lampan verkar fastsatt i golvet. Eller så är du bara väldigt svag!", eventLog.getCurrentRoomAndState(Player))
         else -> SameRoomEvent("Var ser du en lampa att ta?", eventLog.getCurrentRoomAndState(Player), Player)
     }
@@ -342,7 +342,6 @@ fun main() {
 
     val game = Game(connectedRooms, placementMap, actionMap, eventLog,  nonPlayerCharactersWithStartRooms = npcs)
 
-    print("${eventLog.log()}\n")
 
     while (playerEvent !is EndEvent){
         val currentRoomAndState = game.eventlog.getCurrentRoomAndState(Player)

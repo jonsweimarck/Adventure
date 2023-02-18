@@ -1,47 +1,43 @@
 package se.sbit.adventure.engine
 
-
-typealias ItemsPlacementMap = Map<Item, Placement>
-
-
-data class Itemstate(val description: String)
-
 interface Item {
     fun description(eventLog: EventLog): String
-    fun state(eventLog: EventLog): Itemstate
-
+    fun state(eventLog: EventLog): ItemState
 }
 
-abstract class SinglestateItem(private val state: Itemstate):Item {
-    override fun state(eventLog: EventLog): Itemstate = state
+data class ItemState(val description: String)
+
+abstract class SinglestateItem(private val state: ItemState):Item {
+    override fun state(eventLog: EventLog): ItemState = state
     override fun description(eventLog: EventLog): String = state.description
 }
 
-open class MultistateItem (private val states: List<Pair<(EventLog)-> Boolean,  Itemstate> >): Item {
+open class MultistateItem (private val states: List<Pair<(EventLog)-> Boolean,  ItemState> >): Item {
 
     override fun description(eventLog: EventLog): String =
         state(eventLog).description
 
-    override fun state(eventLog: EventLog): Itemstate =
+    override fun state(eventLog: EventLog): ItemState =
         when(val index = states.indexOfFirst { it.first.invoke(eventLog) } ) {
             -1 -> throw Exception("No matching itemstate was found for item")
             else -> states[index].second
         }
 }
 
+typealias ItemsPlacementMap = Map<Item, Placement>
 
 sealed class Placement
 object Carried : Placement()
 data class InRoom(val room: Room): Placement()
 
-abstract class ItemPickedOrDropped(gameText: String, roomAndState: Pair<Room, State>, character: Character, val item: Item ): Event(gameText, roomAndState, character)
+abstract class ItemPickedOrDropped(gameText: String, roomAndState: Pair<Room, RoomState>, character: Character, val item: Item ): Event(gameText, roomAndState, character)
 
 
-class DroppedItemEvent(gameText: String, roomAndState: Pair<Room, State>, character: Character, item: Item):ItemPickedOrDropped(gameText,roomAndState, character, item)
-class PickedUpItemEvent(gameText: String, roomAndState: Pair<Room, State>, character: Character, item: Item):ItemPickedOrDropped(gameText, roomAndState, character, item)
-class NoSuchItemHereEvent(gameText: String, roomAndState: Pair<Room, State>):Event(gameText, roomAndState)
-class NoSuchItemToDropItemEvent(gameText: String, roomAndState: Pair<Room, State>):Event(gameText, roomAndState)
-class InventoryEvent(gameText: String, roomAndState: Pair<Room, State>):Event(gameText, roomAndState)
+class DroppedItemEvent(gameText: String, roomAndState: Pair<Room, RoomState>, character: Character, item: Item):ItemPickedOrDropped(gameText,roomAndState, character, item)
+class PickedUpItemEvent(gameText: String, roomAndState: Pair<Room, RoomState>, character: Character, item: Item):ItemPickedOrDropped(gameText, roomAndState, character, item)
+class NoSuchItemHereEvent(gameText: String, roomAndState: Pair<Room, RoomState>):Event(gameText, roomAndState)
+class NoSuchItemToDropItemEvent(gameText: String, roomAndState: Pair<Room, RoomState>):Event(gameText, roomAndState)
+class InventoryEvent(gameText: String, roomAndState: Pair<Room, RoomState>):Event(gameText, roomAndState)
 
 
 fun actionForPickUpItem(itemToPickUp:Item, noSuchItemHereEventText: String = "That didn't work!", pickedUpEventText: String = "Picked up"): (Input, EventLog) -> Event

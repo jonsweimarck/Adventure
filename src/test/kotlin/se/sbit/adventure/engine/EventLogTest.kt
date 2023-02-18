@@ -12,13 +12,13 @@ class EventLogTest {
 
     @Test
     fun `the current Room and State can be found from single NewRoomEvent`(){
-        val stateA = State("a")
-        val stateB = State("b")
+        val stateA = RoomState("a")
+        val stateB = RoomState("b")
         val roomA = Room(listOf(Pair({ _, _ -> true}, stateA)))
 
         val log = EventLog.fromList(listOf(NewRoomEvent("", Pair(roomA, stateA), Player)))
         expectThat(log.getCurrentRoom(Player)).isEqualTo(roomA)
-        expectThat(log.getCurrentState(Player)).isEqualTo(stateA)
+        expectThat(log.getCurrentRoomState(Player)).isEqualTo(stateA)
     }
 
     @Test
@@ -35,8 +35,8 @@ class EventLogTest {
 
         }
 
-        val stateA = State("a")
-        val stateB = State("b")
+        val stateA = RoomState("a")
+        val stateB = RoomState("b")
         val roomA = Room(listOf(Pair({ _, _ -> true}, stateA)))
         val roomB = Room(listOf(Pair({ _, _ -> true}, stateB)))
         val newRoomAplayer = NewRoomEvent("", Pair(roomA, stateA), Player)
@@ -48,16 +48,16 @@ class EventLogTest {
         val log = EventLog.fromList(listOf(newRoomBplayer, sameRoomBplayer,newRoomBnpc, newRoomAplayer, sameRoomAplayer))
 
         expectThat(log.getCurrentRoom(Player)).isEqualTo(roomA)
-        expectThat(log.getCurrentState(Player)).isEqualTo(stateA)
+        expectThat(log.getCurrentRoomState(Player)).isEqualTo(stateA)
 
         expectThat(log.getCurrentRoom(miscNPC)).isEqualTo(roomB)
-        expectThat(log.getCurrentState(miscNPC)).isEqualTo(stateB)
+        expectThat(log.getCurrentRoomState(miscNPC)).isEqualTo(stateB)
     }
 
     @Test
     fun `the number of turns since entered the current room can be found `(){
-        val stateA = State("a")
-        val stateB = State("b")
+        val stateA = RoomState("a")
+        val stateB = RoomState("b")
         val roomA = Room(listOf(Pair({ _, _ -> true}, stateA)))
         val roomB = Room(listOf(Pair({ _, _ -> true}, stateB)))
 
@@ -81,8 +81,8 @@ class EventLogTest {
     fun `the number of concurrent turns in same room is zero if not in same room anymore`(){
 
         val miscNPC = getDummyNpc()
-        val stateA = State("a")
-        val stateB = State("b")
+        val stateA = RoomState("a")
+        val stateB = RoomState("b")
         val roomA = Room(listOf(Pair({ _, _ -> true}, stateA)))
         val roomB = Room(listOf(Pair({ _, _ -> true}, stateB)))
 
@@ -100,8 +100,8 @@ class EventLogTest {
     fun `the number of concurrent turns in same room is 1 if only just entered the same room`(){
 
         val miscNPC = getDummyNpc()
-        val stateA = State("a")
-        val stateB = State("b")
+        val stateA = RoomState("a")
+        val stateB = RoomState("b")
         val roomA = Room(listOf(Pair({ _, _ -> true}, stateA)))
         val roomB = Room(listOf(Pair({ _, _ -> true}, stateB)))
 
@@ -119,8 +119,8 @@ class EventLogTest {
     fun `the number of concurrent turns in same room is correct if even when room not entered the same turn`(){
 
         val miscNPC = getDummyNpc()
-        val stateA = State("a")
-        val stateB = State("b")
+        val stateA = RoomState("a")
+        val stateB = RoomState("b")
         val roomA = Room(listOf(Pair({ _, _ -> true}, stateA)))
         val roomB = Room(listOf(Pair({ _, _ -> true}, stateB)))
 
