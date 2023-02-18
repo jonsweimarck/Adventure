@@ -14,7 +14,7 @@ class EventLogTest {
     fun `the current Room and State can be found from single NewRoomEvent`(){
         val stateA = RoomState("a")
         val stateB = RoomState("b")
-        val roomA = Room(listOf(Pair({ _, _ -> true}, stateA)))
+        val roomA = Room(listOf(Pair({ _ -> true}, stateA)))
 
         val log = EventLog.fromList(listOf(NewRoomEvent("", Pair(roomA, stateA), Player)))
         expectThat(log.getCurrentRoom(Player)).isEqualTo(roomA)
@@ -37,8 +37,8 @@ class EventLogTest {
 
         val stateA = RoomState("a")
         val stateB = RoomState("b")
-        val roomA = Room(listOf(Pair({ _, _ -> true}, stateA)))
-        val roomB = Room(listOf(Pair({ _, _ -> true}, stateB)))
+        val roomA = Room(listOf(Pair({ _ -> true}, stateA)))
+        val roomB = Room(listOf(Pair({ _ -> true}, stateB)))
         val newRoomAplayer = NewRoomEvent("", Pair(roomA, stateA), Player)
         val newRoomBnpc = NewRoomEvent("", Pair(roomB, stateB), miscNPC)
         val sameRoomAplayer = SameRoomEvent("", Pair(roomA, stateA), Player)
@@ -58,8 +58,8 @@ class EventLogTest {
     fun `the number of turns since entered the current room can be found `(){
         val stateA = RoomState("a")
         val stateB = RoomState("b")
-        val roomA = Room(listOf(Pair({ _, _ -> true}, stateA)))
-        val roomB = Room(listOf(Pair({ _, _ -> true}, stateB)))
+        val roomA = Room(listOf(Pair({ _ -> true}, stateA)))
+        val roomB = Room(listOf(Pair({ _ -> true}, stateB)))
 
         val newRoomBplayer = NewRoomEvent("", Pair(roomB, stateB), Player)
         val newRoomAplayer = NewRoomEvent("", Pair(roomA, stateA), Player)
@@ -83,8 +83,8 @@ class EventLogTest {
         val miscNPC = getDummyNpc()
         val stateA = RoomState("a")
         val stateB = RoomState("b")
-        val roomA = Room(listOf(Pair({ _, _ -> true}, stateA)))
-        val roomB = Room(listOf(Pair({ _, _ -> true}, stateB)))
+        val roomA = Room(listOf(Pair({ _ -> true}, stateA)))
+        val roomB = Room(listOf(Pair({ _ -> true}, stateB)))
 
         val newRoomAplayer = NewRoomEvent("", Pair(roomA, stateA), Player)
         val newRoomBnpc = NewRoomEvent("", Pair(roomB, stateB), miscNPC)
@@ -102,8 +102,8 @@ class EventLogTest {
         val miscNPC = getDummyNpc()
         val stateA = RoomState("a")
         val stateB = RoomState("b")
-        val roomA = Room(listOf(Pair({ _, _ -> true}, stateA)))
-        val roomB = Room(listOf(Pair({ _, _ -> true}, stateB)))
+        val roomA = Room(listOf(Pair({ _ -> true}, stateA)))
+        val roomB = Room(listOf(Pair({ _ -> true}, stateB)))
 
         val newRoomAplayer = NewRoomEvent("", Pair(roomA, stateA), Player)
         val newRoomAnpc = NewRoomEvent("", Pair(roomA, stateA), miscNPC)
@@ -121,8 +121,8 @@ class EventLogTest {
         val miscNPC = getDummyNpc()
         val stateA = RoomState("a")
         val stateB = RoomState("b")
-        val roomA = Room(listOf(Pair({ _, _ -> true}, stateA)))
-        val roomB = Room(listOf(Pair({ _, _ -> true}, stateB)))
+        val roomA = Room(listOf(Pair({ _ -> true}, stateA)))
+        val roomB = Room(listOf(Pair({ _ -> true}, stateB)))
 
         val newRoomAplayer = NewRoomEvent("", Pair(roomA, stateA), Player)
         val newRoomAnpc = NewRoomEvent("", Pair(roomA, stateA), miscNPC)

@@ -49,12 +49,12 @@ private val endState = RoomState(
 
 val eventLog = EventLog()
 
-fun doorIsOpened(input: Input, room: Room): Boolean = ! doorIsClosed(input, room)
-fun doorIsClosed(input: Input, room: Room): Boolean = eventLog.log().filterIsInstance<KeyUsedSuccessfully>().isEmpty()
-fun lightIsOn(input: Input, room: Room): Boolean = eventLog.log().filterIsInstance<SwitchedLightOnEvent>().size > eventLog.log().filterIsInstance<SwitchedLightOffEvent>().size
-fun lightIsOff(input: Input, room: Room): Boolean = ! lightIsOn(input, room)
-fun hedgeIsNotSawnDown(input: Input, room: Room): Boolean = eventLog.log().filterIsInstance<HedgeSawnDownEvent>().isEmpty()
-fun hedgeIsSawnDown(input: Input, room: Room): Boolean = ! hedgeIsNotSawnDown(input, room)
+fun doorIsOpened(eventLog:EventLog): Boolean = ! doorIsClosed(eventLog)
+fun doorIsClosed(eventLog:EventLog): Boolean = eventLog.log().filterIsInstance<KeyUsedSuccessfully>().isEmpty()
+fun lightIsOn(eventLog:EventLog): Boolean = eventLog.log().filterIsInstance<SwitchedLightOnEvent>().size > eventLog.log().filterIsInstance<SwitchedLightOffEvent>().size
+fun lightIsOff(eventLog:EventLog): Boolean = ! lightIsOn(eventLog)
+fun hedgeIsNotSawnDown(eventLog:EventLog): Boolean = eventLog.log().filterIsInstance<HedgeSawnDownEvent>().isEmpty()
+fun hedgeIsSawnDown(eventLog:EventLog): Boolean = ! hedgeIsNotSawnDown(eventLog)
 
 private val garden = Room(listOf(
     Pair(::hedgeIsNotSawnDown, gardenWithHedge),
@@ -144,7 +144,7 @@ enum class ActionCommand: CommandType {
 val stringInputCommand: Map<String, CommandType> = mapOf (
     "((gå (åt )?)?s(öder)?|gå söderut)" to GoCommand.GoSouth,
     "((gå (åt )?)?n(orr)?|gå söderut)" to GoCommand.GoNorth,
-    "(exit( game)?|(av)?sluta|bye|hej( då|då))" to ActionCommand.EndGame,
+    "(exit( game)?|(av)?sluta|bye( bye)?|hej( då|då))" to ActionCommand.EndGame,
     "(Läs |Undersök |titta (på )?)kvitto(t)?" to ActionCommand.ExamineReceipt,
     "(Undersök |titta (på )?)nyckel(n)?" to ActionCommand.ExamineKey,
     "(Undersök |titta (på )?)motorsåg(en)?" to ActionCommand.ExamineChainsaw,
@@ -152,11 +152,11 @@ val stringInputCommand: Map<String, CommandType> = mapOf (
     "släpp kvitto(t)?" to ActionCommand.DropReceipt,
     "(ta |plocka )(upp )?nyckel(n)?" to ActionCommand.TakeKey,
     "släpp nyckel(n)?" to ActionCommand.DropKey,
-    "(öppna|öppna dörr(en)?|använd nyckel(n)?|lås upp( dörren?)?)" to ActionCommand.UseKey,
+    "(öppna|öppna dörr(en)?|använd nyckel(n)?|lås upp( dörren)?).*" to ActionCommand.UseKey,
     "titta in( .*)?" to ActionCommand.LookIn,
     "(gå in( .*)?|gå till villan)" to ActionCommand.EnterHouse,
     "gå ut.*" to ActionCommand.ExitHouse,
-    "(tänd|tänd ((golv)?lampa(n)?|ljuset))" to ActionCommand.SwitchOnLight,
+    "(tänd|tänd|(sätt på) ((golv)?lampa(n)?|ljuset))" to ActionCommand.SwitchOnLight,
     "(släck|släck ((golv)?lampa(n)?|ljuset))" to ActionCommand.SwitchOffLight,
     "(ta |plocka )(upp )?(golv)?lampa(n)?" to ActionCommand.TakeLamp,
     "(ta |plocka )(upp )?motorsåg(en)?" to ActionCommand.TakeChainsaw,
@@ -193,7 +193,7 @@ val actionMap: Map<CommandType, (Input, EventLog) -> Event> = mapOf(
     ActionCommand.ExamineChainsaw to actionForExamineItem(chainsaw, "Wow! En 13 tums Husqvarna 550 XPG Mark II! Orangeröd! ", "Då får du först plocka upp den igen!"),
 
     ActionCommand.UseKey to ::useKey,
-    ActionCommand.GibberishInput to { _, _-> Event("Hmmm, det där förstod jag inte!", eventLog.getCurrentRoomAndState(Player)) },
+    ActionCommand.GibberishInput to { _, eventLog-> Event("Hmmm, det där förstod jag inte!", eventLog.getCurrentRoomAndState(Player)) },
     ActionCommand.EndGame to { _, eventLog -> EndEvent ("Slutspelat!\nSlut för idag, tack för idag!", eventLog.getCurrentRoomAndState(Player)) },
     ActionCommand.TakeReceipt to actionForPickUpItem(receipt, "Går inte att ta upp en sådan här!", "Du tar upp"),
     ActionCommand.DropReceipt to actionForDropItem(receipt, "Du har ingen sådan att släppa!", "Du släpper"),
@@ -283,7 +283,7 @@ fun examineKey(input: Input, eventLog: EventLog): Event =
 
 fun lookIn2(input: Input, eventLog: EventLog): Event =
     when(eventLog.getCurrentRoomState(Player)){
-        inFrontOfOpenDoor  -> if (lightIsOn(input,  eventLog.getCurrentRoom(Player))) {
+        inFrontOfOpenDoor  -> if (lightIsOn(eventLog)) {
             SameRoomEvent("Du ser knappt något eftersom det enda ljuset kommer från en liten golvlampa.", eventLog.getCurrentRoomAndState(Player), Player)
         } else {
             SameRoomEvent("Det ser helt mörkt ut där inne.", eventLog.getCurrentRoomAndState(Player), Player)

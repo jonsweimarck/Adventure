@@ -9,16 +9,17 @@ class NewRoomEvent(gameText: String, newRoomAndState: Pair<Room, RoomState>, cha
 class SameRoomEvent(gameText: String, newRoomAndState: Pair<Room, RoomState>, character: Character): RoomEvent(gameText, newRoomAndState, character)
 
 typealias RoomGuard = (Input) -> Boolean
-typealias RoomStateGuard = (Input, Room) -> Boolean
+typealias RoomStateGuard = (EventLog) -> Boolean
 
 val north: RoomGuard = { input -> (input.command == GoCommand.GoNorth)}
 val east: RoomGuard = { input -> (input.command == GoCommand.GoEast)}
 val south: RoomGuard = { input -> (input.command == GoCommand.GoSouth)}
 val west: RoomGuard = { input -> (input.command == GoCommand.GoWest)}
 
-infix fun RoomGuard.and(g2: RoomGuard): RoomGuard {
-    return {input -> this.invoke(input) && g2(input)}
-}
+// This jdk signature clashes with the one for RoomState below, but I guess it would never be used anyway cause that would mean "inputA and inputB"
+//infix fun RoomGuard.and(g2: RoomGuard): RoomGuard {
+//    return {input -> this.invoke(input) && g2(input)}
+//}
 
 infix fun RoomGuard.or(g2: RoomGuard): RoomGuard {
     return {input -> this.invoke(input) || g2(input)}
@@ -26,12 +27,14 @@ infix fun RoomGuard.or(g2: RoomGuard): RoomGuard {
 
 
 infix fun RoomStateGuard.and(g2: RoomStateGuard): RoomStateGuard {
-    return {input, room -> this.invoke(input, room) && g2(input, room)}
+    return {eventLog -> this.invoke(eventLog) && g2(eventLog)}
 }
 
-infix fun RoomStateGuard.or(g2: RoomStateGuard): RoomStateGuard {
-    return {input, room -> this.invoke(input, room) || g2(input, room)}
-}
+// This jdk signature clashes with the one for Room above, but I guess you could live without and add two different guards leading to the same state instead
+// of the two staed with "or"
+//infix fun RoomStateGuard.or(g2: RoomStateGuard): RoomStateGuard {
+//    return {eventLog -> this.invoke(eventLog) || g2(eventLog)}
+//}
 
 fun actionForGo(connectionsMap: Map<Room, List<Pair<RoomGuard, Room>>>,
                 sameRoomEventText: String = "That didn't work!"): (Input, EventLog) -> Event
@@ -53,7 +56,7 @@ fun actionForGo(connectionsMap: Map<Room, List<Pair<RoomGuard, Room>>>,
         }
         val newRoom = roomConnections[roomIndex].second
 
-        val stateIndex = newRoom.states.indexOfFirst { it.first.invoke(input, currentRoom) }
+        val stateIndex = newRoom.states.indexOfFirst { it.first.invoke(eventLog) }
         if (stateIndex == -1) {
             // No state matches!
             return SameRoomEvent(sameRoomEventText, currentRoomAndState, Player)
@@ -75,7 +78,7 @@ fun goWherePossible(roomConnections: Map<Room, List<Room>>, eventLog: EventLog, 
 
     // Try to find a state in any room
     for(room in rooms) {
-        val stateIndex = room.states.indexOfFirst { state -> state.first.invoke(Input(NPCinput), currentRoom)}
+        val stateIndex = room.states.indexOfFirst { state -> state.first.invoke(eventLog)}
         if(stateIndex != -1) {
             return NewRoomEvent(enterRoomGameText, Pair(room, room.states[stateIndex].second), character)
         }

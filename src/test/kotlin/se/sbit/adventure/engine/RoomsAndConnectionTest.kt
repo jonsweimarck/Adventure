@@ -16,8 +16,8 @@ import strikt.assertions.isGreaterThan
 @DisplayName("Given a world with rooms, states and connections, the player:")
 class RoomsAndConnectionTest {
 
-    val alwaysPass = { _: Input, _: Room -> true}
-    val alwaysStop = { _: Input, _: Room -> false}
+    val alwaysPass = { _: EventLog -> true}
+    val alwaysStop = { _: EventLog -> false}
 
     val stateA = RoomState("a")
     val stateB = RoomState("b")
@@ -120,8 +120,8 @@ class RoomsAndConnectionTest {
         fun `can randomly chose a connected room`(){
 
             // Setting up RoomA connected to B, C, D. But roomD can't actually be chosen because it's only RoomState's RoomStateGuard can not be passed
-            val alwaysPass = { _: Input, _: Room -> true}
-            val alwaysStop = { _: Input, _: Room -> false}
+            val alwaysPass = { _: EventLog -> true}
+            val alwaysStop = { _: EventLog -> false}
 
             val stateA = RoomState("a")
             val stateB = RoomState("b")
