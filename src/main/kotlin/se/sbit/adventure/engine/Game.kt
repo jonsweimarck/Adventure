@@ -9,7 +9,7 @@ open class EndEvent(gameEndText:String, roomAndState: Pair<Room, RoomState>):Eve
 
 class Game(val connections: Map<Room, List<Pair<RoomGuard, Room>>>,
            itemsPlacementMap: Map<Item, Placement> = emptyMap(),
-           val actionMap: Map<CommandType, (Input, EventLog) -> Event> = emptyMap(),
+           val actionMap: Map<CommandType, (EventLog) -> Event> = emptyMap(),
            val eventlog: EventLog = EventLog(),
            nonPlayerCharactersWithStartRooms: List<Pair<NPC, Pair<Room, RoomState>>> = emptyList()
 ) {
@@ -40,7 +40,7 @@ class Game(val connections: Map<Room, List<Pair<RoomGuard, Room>>>,
     fun playerDo(input: Input, eventLog: EventLog): Event {
         return actionMap.getOrElse(input.command) {
             throw Exception("Mama Mia! Undefined command in input ${input.command}")
-        }.invoke(input, eventLog)
+        }.invoke(eventLog)
     }
 }
 

@@ -43,11 +43,11 @@ class RoomsAndConnectionTest {
     )
 
 
-    val actionMap: Map<CommandType, (Input, EventLog) -> Event> = mapOf(
-        GoCommand.GoEast to actionForGo(connectionsMap),
-        GoCommand.GoWest to actionForGo(connectionsMap),
-        GoCommand.GoNorth to actionForGo(connectionsMap),
-        GoCommand.GoSouth to actionForGo(connectionsMap),
+    val actionMap: Map<CommandType, (EventLog) -> Event> = mapOf(
+        GoCommand.GoEast to actionForGo(GoCommand.GoEast, connectionsMap),
+        GoCommand.GoWest to actionForGo(GoCommand.GoWest, connectionsMap),
+        GoCommand.GoNorth to actionForGo(GoCommand.GoNorth, connectionsMap),
+        GoCommand.GoSouth to actionForGo(GoCommand.GoSouth, connectionsMap),
     )
 
     @Test

@@ -36,10 +36,10 @@ infix fun RoomStateGuard.and(g2: RoomStateGuard): RoomStateGuard {
 //    return {eventLog -> this.invoke(eventLog) || g2(eventLog)}
 //}
 
-fun actionForGo(connectionsMap: Map<Room, List<Pair<RoomGuard, Room>>>,
-                sameRoomEventText: String = "That didn't work!"): (Input, EventLog) -> Event
+fun actionForGo(command: CommandType, connectionsMap: Map<Room, List<Pair<RoomGuard, Room>>>,
+                sameRoomEventText: String = "That didn't work!"): (EventLog) -> Event
 {
-    return fun(input, eventLog): Event {
+    return fun(eventLog): Event {
         val currentRoomAndState = eventLog.getCurrentRoomAndState(Player)
         val currentRoom  = currentRoomAndState.first
 
@@ -49,7 +49,7 @@ fun actionForGo(connectionsMap: Map<Room, List<Pair<RoomGuard, Room>>>,
             return SameRoomEvent(sameRoomEventText, currentRoomAndState, Player)
         }
 
-        val roomIndex = roomConnections.indexOfFirst { it.first.invoke(input) }
+        val roomIndex = roomConnections.indexOfFirst { it.first.invoke(Input(command)) }
         if (roomIndex == -1) {
             // Trying to walk in an unconnected direction
             return SameRoomEvent(sameRoomEventText, currentRoomAndState, Player)

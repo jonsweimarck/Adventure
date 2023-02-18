@@ -53,7 +53,7 @@ class PickUpAndDropTest {
 
         expectThat(carriedItems(game.eventlog)).containsExactly(bottle)
 
-        val resultingEvent = actionForPickUpItem(sword).invoke(Input(object: CommandType{}), game.eventlog)
+        val resultingEvent = actionForPickUpItem(sword).invoke(game.eventlog)
         game.eventlog.add(resultingEvent)
 
         expectThat(carriedItems(game.eventlog)).containsExactlyInAnyOrder(bottle, sword)
@@ -66,7 +66,7 @@ class PickUpAndDropTest {
         val eventLog = EventLog.fromList(listOf(NewRoomEvent("start room", Pair(roomA, stateA), Player)))
         val game = Game(connectedRooms, itemMap, eventlog = eventLog)
 
-        val result = actionForPickUpItem(key).invoke(Input(object: CommandType{}), game.eventlog)
+        val result = actionForPickUpItem(key).invoke(game.eventlog)
         expectThat(result).isA<NoSuchItemHereEvent>()
     }
 
@@ -75,7 +75,7 @@ class PickUpAndDropTest {
         val eventLog = EventLog.fromList(listOf(NewRoomEvent("start room", Pair(roomA, stateA), Player)))
         val game = Game(connectedRooms, itemMap, eventlog = eventLog)
 
-        val result = actionForPickUpItem(bottle).invoke(Input(object: CommandType{}), game.eventlog)
+        val result = actionForPickUpItem(bottle).invoke(game.eventlog)
         expectThat(result).isA<NoSuchItemHereEvent>()
     }
 
@@ -87,7 +87,7 @@ class PickUpAndDropTest {
 
         expectThat(carriedItems(game.eventlog)).containsExactly(bottle)
 
-        val resultingEvent = actionForDropItem(bottle).invoke(Input(object: CommandType{}), game.eventlog)
+        val resultingEvent = actionForDropItem(bottle).invoke(game.eventlog)
         game.eventlog.add(resultingEvent)
 
         expectThat(carriedItems(game.eventlog)).isEmpty()
@@ -99,7 +99,7 @@ class PickUpAndDropTest {
         val eventLog = EventLog.fromList(listOf(NewRoomEvent("start room", Pair(roomA, stateA), Player)))
         val game = Game(connectedRooms, itemMap, eventlog = eventLog)
 
-        val result = actionForDropItem(key).invoke(Input(object: CommandType{}), game.eventlog)
+        val result = actionForDropItem(key).invoke(game.eventlog)
         expectThat(result).isA<NoSuchItemToDropItemEvent>()
     }
 

@@ -62,17 +62,17 @@ class ActionsTest {
 
     class DancingEvent(roomAndState: Pair<Room, RoomState>): Event("Dance, dance, dance!", roomAndState)
 
-    val actionMap: Map<CommandType, (Input, EventLog) -> Event> = mapOf(
-        GoCommand.GoEast to actionForGo(connectedRooms),
-        GoCommand.GoWest to actionForGo(connectedRooms),
-        GoCommand.GoNorth to actionForGo(connectedRooms),
-        GoCommand.GoSouth to actionForGo(connectedRooms),
+    val actionMap: Map<CommandType, (EventLog) -> Event> = mapOf(
+        GoCommand.GoEast to actionForGo(GoCommand.GoEast, connectedRooms),
+        GoCommand.GoWest to actionForGo(GoCommand.GoWest, connectedRooms),
+        GoCommand.GoNorth to actionForGo(GoCommand.GoNorth, connectedRooms),
+        GoCommand.GoSouth to actionForGo(GoCommand.GoSouth, connectedRooms),
         ActionCommand.UseKey to ::useKey,
-        ActionCommand.Dance to { _, eventlog  -> DancingEvent(eventlog.getCurrentRoomAndState(Player)) }
+        ActionCommand.Dance to {eventlog  -> DancingEvent(eventlog.getCurrentRoomAndState(Player)) }
     )
 
 
-    fun useKey(input: Input, eventLog: EventLog): Event {
+    fun useKey(eventLog: EventLog): Event {
         if(!carriedItems(eventLog).contains(key)){
             return NoKeyToBeUsed(eventLog.getCurrentRoomAndState(Player))
         }
@@ -134,7 +134,7 @@ class ActionsTest {
         val game = Game(connectedRooms, placementMap, actionMap, eventlog = eventLog)
 
         // Drop the key
-        val resultingEvent = actionForDropItem(key).invoke(Input(object: CommandType{}), game.eventlog )
+        val resultingEvent = actionForDropItem(key).invoke(game.eventlog )
         game.eventlog.add(resultingEvent)
         expectThat(carriedItems(game.eventlog)).doesNotContain(key)
         // Try to use it
